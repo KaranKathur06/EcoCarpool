@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
+        <h1 class="h2">Ride Details</h1>
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">{{ object.source }} to {{ object.destination }}</h5>
+            <p class="card-text">
+                <strong>Date:</strong> {{ object.ride_date }}<br>
+                <strong>Vehicle:</strong> {{ object.vehicle }}<br>
+                <strong>Price:</strong> ₹{{ object.price }}<br>
+                <strong>Available Seats:</strong> {{ object.available_seats }}
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

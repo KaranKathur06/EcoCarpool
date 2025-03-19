@@ -21,6 +21,7 @@ from dashboard import views as dashboard_views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', dashboard_views.dashboard_home, name='dashboard'),
+    path('dashboard/', include('dashboard.urls')),
     path('rides/', include('rides.urls')),
     path('vehicles/', include('vehicles.urls')),
     path('bookings/', include('bookings.urls')),

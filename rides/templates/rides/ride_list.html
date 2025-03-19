@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Available Rides</h1>
+<ul>
+  {% for ride in rides %}
+    <li>
+      {{ ride.start_location.address }} to {{ ride.end_location.address }} 
+      ({{ ride.ride_date }} | Seats: {{ ride.available_seats }})
+    </li>
+  {% endfor %}
+</ul>
+{% endblock %}

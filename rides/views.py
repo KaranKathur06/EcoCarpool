@@ -1,4 +1,5 @@
-from django.views.generic import ListView, DetailView
+# rides/views.py
+from django.views.generic import ListView
 from .models import Ride
 
 class RideListView(ListView):
@@ -6,6 +7,5 @@ class RideListView(ListView):
     template_name = 'rides/ride_list.html'
     context_object_name = 'rides'
 
-class RideDetailView(DetailView):
-    model = Ride
-    template_name = 'rides/ride_detail.html'
+    def get_queryset(self):
+        return Ride.objects.filter(ride_date__gte=timezone.now())

@@ -6,38 +6,7 @@
     <div class="row">
         <!-- Sidebar -->
         <nav class="col-md-2 d-none d-md-block bg-light sidebar">
-            <div class="sidebar-sticky">
-                <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
-                    <span>Navigation</span>
-                </h6>
-                <ul class="nav flex-column">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="{% url 'dashboard' %}">
-                            Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'rides' %}">
-                            Rides
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'vehicles' %}">
-                            Vehicles
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'bookings' %}">
-                            Bookings
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'reviews' %}">
-                            Reviews
-                        </a>
-                    </li>
-                </ul>
-            </div>
+            <!-- ... (keep your existing sidebar code) ... -->
         </nav>
 
         <!-- Main Content -->
@@ -47,66 +16,53 @@
             </div>
 
             <!-- Statistics Cards -->
-            <div class="row">
-                <div class="col-md-4 mb-4">
+            <div class="row" id="stats-cards">
+                <!-- Cards will be populated by JavaScript -->
+            </div>
+
+            <!-- Charts Section -->
+            <div class="row mt-4">
+                <div class="col-md-6">
                     <div class="card">
+                        <div class="card-header">Rides Distribution</div>
                         <div class="card-body">
-                            <h5 class="card-title">Total Users</h5>
-                            <h2 class="card-text">{{ total_users }}</h2>
+                            <canvas id="ridesChart"></canvas>
                         </div>
                     </div>
                 </div>
                 
-                <div class="col-md-4 mb-4">
+                <div class="col-md-6">
                     <div class="card">
+                        <div class="card-header">Earnings Overview</div>
                         <div class="card-body">
-                            <h5 class="card-title">Total Rides</h5>
-                            <h2 class="card-text">{{ total_rides }}</h2>
+                            <canvas id="earningsChart"></canvas>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="col-md-4 mb-4">
+            <!-- Recent Rides Table -->
+            <div class="row mt-4">
+                <div class="col-12">
                     <div class="card">
+                        <div class="card-header">Recent Rides</div>
                         <div class="card-body">
-                            <h5 class="card-title">Today's Rides</h5>
-                            <h2 class="card-text">{{ today_rides }}</h2>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-4 mb-4">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title">Monthly Rides</h5>
-                            <h2 class="card-text">{{ month_rides }}</h2>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-4 mb-4">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title">Today's Earnings</h5>
-                            <h2 class="card-text">₹{{ today_earnings }}</h2>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-4 mb-4">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title">Total Earnings</h5>
-                            <h2 class="card-text">₹{{ total_earnings }}</h2>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-4 mb-4">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title">Total Expenses</h5>
-                            <h2 class="card-text">₹{{ total_expenses }}</h2>
+                            <div class="table-responsive">
+                                <table class="table table-striped" id="recentRides">
+                                    <thead>
+                                        <tr>
+                                            <th>From</th>
+                                            <th>To</th>
+                                            <th>Date</th>
+                                            <th>Seats</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Data will be populated by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -114,4 +70,104 @@
         </main>
     </div>
 </div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Fetch dashboard data
+    fetch('/api/dashboard-stats/')
+        .then(response => response.json())
+        .then(data => {
+            // Populate stats cards
+            const stats = [
+                {title: 'Total Users', value: data.total_users, icon: '👥'},
+                {title: 'Total Rides', value: data.total_rides, icon: '🚗'},
+                {title: "Today's Rides", value: data.today_rides, icon: '📅'},
+                {title: 'Monthly Rides', value: data.month_rides, icon: '📆'},
+                {title: "Today's Earnings", value: '₹'+data.today_earnings, icon: '💰'},
+                {title: 'Total Earnings', value: '₹'+data.total_earnings, icon: '💵'},
+                {title: 'Active Vehicles', value: data.active_vehicles, icon: '🚙'}
+            ];
+
+            const cardsContainer = document.getElementById('stats-cards');
+            stats.forEach(stat => {
+                cardsContainer.innerHTML += `
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body d-flex align-items-center">
+                                <div class="mr-3 display-4">${stat.icon}</div>
+                                <div>
+                                    <h5 class="card-title text-muted">${stat.title}</h5>
+                                    <h2 class="card-text">${stat.value}</h2>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Initialize charts
+            initRidesChart(data.rides_data);
+            initEarningsChart(data.earnings_data);
+            
+            // Populate recent rides table
+            const ridesBody = document.querySelector('#recentRides tbody');
+            data.recent_rides.forEach(ride => {
+                ridesBody.innerHTML += `
+                    <tr>
+                        <td>${ride.start_location}</td>
+                        <td>${ride.end_location}</td>
+                        <td>${new Date(ride.ride_date).toLocaleDateString()}</td>
+                        <td>${ride.available_seats}</td>
+                        <td><span class="badge ${ride.status === 'completed' ? 'bg-success' : 'bg-warning'}">${ride.status}</span></td>
+                    </tr>
+                `;
+            });
+        });
+
+    function initRidesChart(data) {
+        new Chart(document.getElementById('ridesChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Completed', 'Upcoming', 'Cancelled'],
+                datasets: [{
+                    data: [data.completed, data.upcoming, data.cancelled],
+                    backgroundColor: ['#4CAF50', '#2196F3', '#F44336']
+                }]
+            }
+        });
+    }
+
+    function initEarningsChart(data) {
+        new Chart(document.getElementById('earningsChart'), {
+            type: 'line',
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    label: 'Earnings (₹)',
+                    data: data.values,
+                    borderColor: '#4CAF50',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+});
+</script>
+
+<style>
+.card { border-radius: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+.sidebar { background: #f8f9fa; border-right: 1px solid #eee; }
+.table-responsive { max-height: 400px; overflow-y: auto; }
+.badge { font-size: 0.9em; padding: 0.5em 0.75em; }
+</style>
+
 {% endblock %}

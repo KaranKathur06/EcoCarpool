@@ -2,42 +2,42 @@ from django.shortcuts import render
 from django.db.models import Sum, Count
 from datetime import date
 from rides.models import Ride
-from bookings.models import Booking,Payment
-from users.models import User   
+from bookings.models import Booking  
+from payments.models import Payment  
+from users.models import CustomUser
 from django.utils import timezone
 
 def dashboard_home(request):
     # Users Statistics
-    total_users = User.objects.count()
+    total_users = CustomUser.objects.count()
     
     # Rides Statistics
     total_rides = Ride.objects.count()
+    
     # For today's rides
     today_rides = Ride.objects.filter(
-        start_time__date=timezone.now().date()
+        ride_date__date=timezone.now().date()  
     ).count()
-
+    
     # For monthly rides
     month_rides = Ride.objects.filter(
-        start_time__month=timezone.now().month,
-        start_time__year=timezone.now().year
+        ride_date__month=timezone.now().month,  
+        ride_date__year=timezone.now().year     
     ).count()
     
     # Today's Earnings
     today_earnings = Payment.objects.filter(
-        booking__ride__start_time__date=date.today(),
-        transaction_status='success'
+        booking__ride__ride_date__date=date.today(),
+        status='completed'
     ).aggregate(total=Sum('amount'))['total'] or 0
 
     # Total Earnings
     total_earnings = Payment.objects.filter(
-        transaction_status='success'
+        status='completed'
     ).aggregate(total=Sum('amount'))['total'] or 0
     
     # Expenses (Example calculation - adjust according to your models)
-    total_promocodes = Booking.objects.aggregate(total=Sum('promocode__discount'))['total'] or 0
-    transaction_charges = total_earnings * 0.02  # Assuming 2% transaction charges
-    total_expenses = total_promocodes + transaction_charges
+    total_expenses = 0
 
     context = {
         'total_users': total_users,

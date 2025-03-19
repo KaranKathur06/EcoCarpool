@@ -27,7 +27,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-AUTH_USER_MODEL = 'users.User'
+AUTH_USER_MODEL = 'users.CustomUser'
 
 LOGIN_URL = '/users/login/'
 LOGIN_REDIRECT_URL = 'dashboard-home'
@@ -43,17 +43,24 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'rest_framework.authtoken',
 
     # Local apps
-    'dashboard.apps.DashboardConfig',
     'users.apps.UsersConfig',
+    'dashboard.apps.DashboardConfig',
     'vehicles.apps.VehiclesConfig',
     'rides.apps.RidesConfig',
     'bookings.apps.BookingsConfig',
     'reviews.apps.ReviewsConfig',
+    'payments.apps.PaymentsConfig'  
 ]
 
-
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ]
+}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

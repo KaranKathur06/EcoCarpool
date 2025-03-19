@@ -1,45 +1,19 @@
-# bookings/models.py
 from django.db import models
-from django.core.validators import MinValueValidator , MaxValueValidator
-from users.models import User
+from users.models import CustomUser
 from rides.models import Ride
-
-class PromoCode(models.Model):
-    code = models.CharField(max_length=20, unique=True)
-    discount_percent = models.DecimalField(
-        max_digits=5, 
-        decimal_places=2,
-        validators=[MinValueValidator(0), MaxValueValidator(100)]
-    )
-    valid_from = models.DateTimeField()
-    valid_to = models.DateTimeField()
-    max_usage = models.PositiveIntegerField(default=1)
-    times_used = models.PositiveIntegerField(default=0)
-
-    class Meta:
-        ordering = ['-valid_from']
-
-    def __str__(self):
-        return f"{self.code} ({self.discount_percent}%)"
+from django.conf import settings
 
 class Booking(models.Model):
-    passenger = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='bookings'
-    )
-    ride = models.ForeignKey(
-        Ride,
-        on_delete=models.CASCADE,
-        related_name='bookings'
-    )
+    STATUS_CHOICES = [
+        ('confirmed', 'Confirmed'),
+        ('cancelled', 'Cancelled'),
+    ]
+    #user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    ride = models.ForeignKey(Ride, on_delete=models.CASCADE)
     seats_booked = models.PositiveIntegerField(default=1)
-    # Rest of fields remain same...
+    booking_date = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='confirmed')
 
-class Payment(models.Model):
-    # Keep existing fields but add:
-    class Meta:
-        verbose_name = 'Payment'
-        verbose_name_plural = 'Payments'
-        ordering = ['-initiated_at']
-        get_latest_by = 'initiated_at'  
+    def __str__(self):
+        return f"Booking #{self.id} by {self.user.email}"

@@ -128,7 +128,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👥 Authors
 
-- Karan N Kathur - https://github.com/KaranKathur06
+- [Karan N Kathur](https://github.com/KaranKathur06) 
 
 ## 🙏 Acknowledgments
 

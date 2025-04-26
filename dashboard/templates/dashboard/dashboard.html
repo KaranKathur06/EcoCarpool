@@ -1,0 +1,403 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .dashboard-container {
+        padding: 2rem;
+    }
+
+    .welcome-section {
+        margin-bottom: 2rem;
+    }
+
+    .welcome-section h1 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 0.5rem;
+    }
+
+    .welcome-section p {
+        color: #718096;
+        font-size: 0.875rem;
+    }
+
+    .stats-grid-top {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stats-grid-secondary {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+        background: rgba(66, 153, 225, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #4299e1;
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        color: #718096;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #2d3748;
+    }
+
+    .stat-change {
+        font-size: 0.75rem;
+        color: #48bb78;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .stat-change.negative {
+        color: #f56565;
+    }
+
+    .chart-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .chart-container {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .chart-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #2d3748;
+    }
+
+    .chart-period {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .period-btn {
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        background: #f7fafc;
+        color: #718096;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .period-btn.active {
+        background: #4299e1;
+        color: white;
+    }
+
+    .chart-content {
+        height: 300px;
+        position: relative;
+    }
+
+    @media (max-width: 1200px) {
+        .stats-grid-top {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .stats-grid-secondary {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .chart-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .stats-grid-top, .stats-grid-secondary {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Welcome Section -->
+    <div class="welcome-section">
+        <h1>Welcome back, {{ user.get_full_name|default:user.username }}!</h1>
+        <p>Here's what's happening with your carpooling activities.</p>
+    </div>
+
+    <!-- Top Stats -->
+    <div class="stats-grid-top">
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+            </div>
+            <div class="stat-label">Total Users</div>
+            <div class="stat-value">{{ total_users|default:"0" }}</div>
+            <div class="stat-change">
+                <i class="fas fa-arrow-up"></i>
+                <span>12% from last month</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-route"></i>
+                </div>
+            </div>
+            <div class="stat-label">Total Rides</div>
+            <div class="stat-value">{{ total_rides|default:"0" }}</div>
+            <div class="stat-change">
+                <i class="fas fa-arrow-up"></i>
+                <span>8% from last week</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+            </div>
+            <div class="stat-label">Total Earnings</div>
+            <div class="stat-value">${{ total_earnings|default:"0"|floatformat:2 }}</div>
+            <div class="stat-change">
+                <i class="fas fa-arrow-up"></i>
+                <span>15% from last month</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-exchange-alt"></i>
+                </div>
+            </div>
+            <div class="stat-label">Transaction Fees</div>
+            <div class="stat-value">${{ transaction_fees|default:"0"|floatformat:2 }}</div>
+            <div class="stat-change">
+                <i class="fas fa-arrow-up"></i>
+                <span>5% from last month</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Secondary Stats -->
+    <div class="stats-grid-secondary">
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-user-friends"></i>
+                </div>
+            </div>
+            <div class="stat-label">Total Passengers</div>
+            <div class="stat-value">{{ total_passengers|default:"0" }}</div>
+            <div class="stat-change">
+                <i class="fas fa-arrow-up"></i>
+                <span>Today: {{ today_passengers|default:"0" }}</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-car"></i>
+                </div>
+            </div>
+            <div class="stat-label">Your Rides</div>
+            <div class="stat-value">{{ your_rides|default:"0" }}</div>
+            <div class="stat-change">
+                <i class="fas fa-arrow-up"></i>
+                <span>Upcoming: {{ upcoming_rides|default:"0" }}</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-wallet"></i>
+                </div>
+            </div>
+            <div class="stat-label">Your Earnings</div>
+            <div class="stat-value">${{ your_earnings|default:"0"|floatformat:2 }}</div>
+            <div class="stat-change">
+                <i class="fas fa-arrow-up"></i>
+                <span>Today: ${{ today_earnings|default:"0"|floatformat:2 }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="mt-4">
+        <a href="{% url 'rides:ride-create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Create New Ride
+        </a>
+        <a href="{% url 'rides:my-rides' %}" class="btn btn-secondary ms-2">
+            <i class="fas fa-list me-2"></i>View My Rides
+        </a>
+    </div>
+
+    <!-- Charts -->
+    <div class="chart-grid mt-4">
+        <div class="chart-container">
+            <div class="chart-header">
+                <h5 class="chart-title">Earnings Overview</h5>
+                <div class="chart-period">
+                    <button class="period-btn active">Week</button>
+                    <button class="period-btn">Month</button>
+                    <button class="period-btn">Year</button>
+                </div>
+            </div>
+            <div class="chart-content">
+                <canvas id="earningsChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-header">
+                <h5 class="chart-title">Ride Activity</h5>
+                <div class="chart-period">
+                    <button class="period-btn active">Week</button>
+                    <button class="period-btn">Month</button>
+                    <button class="period-btn">Year</button>
+                </div>
+            </div>
+            <div class="chart-content">
+                <canvas id="ridesChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Chart data from Django template
+    const chartData = {
+        labels: JSON.parse('{{ chart_labels|safe|escapejs }}'),
+        earnings: JSON.parse('{{ earnings_data|safe|escapejs }}'),
+        rides: JSON.parse('{{ rides_data|safe|escapejs }}')
+    };
+
+    // Earnings Chart
+    const earningsCtx = document.getElementById('earningsChart').getContext('2d');
+    new Chart(earningsCtx, {
+        type: 'line',
+        data: {
+            labels: chartData.labels,
+            datasets: [{
+                label: 'Earnings',
+                data: chartData.earnings,
+                borderColor: '#4299e1',
+                backgroundColor: 'rgba(66, 153, 225, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Rides Chart
+    const ridesCtx = document.getElementById('ridesChart').getContext('2d');
+    new Chart(ridesCtx, {
+        type: 'bar',
+        data: {
+            labels: chartData.labels,
+            datasets: [{
+                label: 'Rides',
+                data: chartData.rides,
+                backgroundColor: '#48bb78',
+                borderColor: '#48bb78',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

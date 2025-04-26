@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Transaction Details - EcoCarpool{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="card-title text-primary mb-0">Transaction Details</h5>
+                        <a href="{% url 'payments:wallet' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Wallet
+                        </a>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-2 text-muted">Transaction ID</h6>
+                                    <p class="card-text">{{ transaction.id }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-2 text-muted">Date</h6>
+                                    <p class="card-text">{{ transaction.created_at|date:"M d, Y H:i" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-2 text-muted">Type</h6>
+                                    <p class="card-text">
+                                        {% if transaction.transaction_type == 'DEPOSIT' %}
+                                            <span class="badge bg-success">Deposit</span>
+                                        {% elif transaction.transaction_type == 'WITHDRAWAL' %}
+                                            <span class="badge bg-danger">Withdrawal</span>
+                                        {% elif transaction.transaction_type == 'PAYMENT' %}
+                                            <span class="badge bg-primary">Payment</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ transaction.transaction_type }}</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-2 text-muted">Amount</h6>
+                                    <p class="card-text {% if transaction.transaction_type == 'DEPOSIT' %}text-success{% elif transaction.transaction_type == 'WITHDRAWAL' %}text-danger{% else %}text-primary{% endif %}">
+                                        ₹{{ transaction.amount }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-2 text-muted">Status</h6>
+                                    <p class="card-text">
+                                        {% if transaction.status == 'completed' %}
+                                            <span class="badge bg-success">Completed</span>
+                                        {% elif transaction.status == 'pending' %}
+                                            <span class="badge bg-warning">Pending</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Failed</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-2 text-muted">Payment Method</h6>
+                                    <p class="card-text">{{ transaction.payment_method|default:"N/A" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if transaction.description %}
+                    <div class="card bg-light mb-4">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">Description</h6>
+                            <p class="card-text">{{ transaction.description }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card {
+        border: none;
+        border-radius: 10px;
+    }
+    .badge {
+        padding: 0.5em 0.8em;
+    }
+    .bg-light {
+        background-color: #f8f9fa !important;
+    }
+</style>
+{% endblock %} 

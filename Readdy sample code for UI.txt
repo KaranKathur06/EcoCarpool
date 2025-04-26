@@ -1,0 +1,969 @@
+<template>
+<view class="container">
+<!-- Sidebar Navigation -->
+<view class="sidebar">
+<view class="logo-container">
+<text class="logo">ECOCARPOOL</text>
+</view>
+<view class="nav-section">
+<view class="nav-item active cursor-pointer">
+<uni-icons type="home" size="20" color="#ffffff"></uni-icons>
+<text class="nav-text">Dashboard</text>
+</view>
+</view>
+<view class="nav-section-title">RIDES</view>
+<view class="nav-section">
+<a href="https://readdy.ai/home/781b8ec0-3a6a-49cd-b9a0-31e1329b7672/f39f3911-809f-4e49-bef6-9484c1228ab1" data-readdy="true">
+<view class="nav-item cursor-pointer" v-if="userRole === 'driver' || userRole === 'admin'">
+<uni-icons type="plusempty" size="20" color="#ffffff"></uni-icons>
+<text class="nav-text">Create Ride</text>
+</view>
+</a>
+<view class="nav-item cursor-pointer" v-if="userRole === 'passenger' || userRole === 'admin'">
+<uni-icons type="search" size="20" color="#ffffff"></uni-icons>
+<text class="nav-text">Find Rides</text>
+</view>
+<a href="https://readdy.ai/home/781b8ec0-3a6a-49cd-b9a0-31e1329b7672/593e09ed-d5e0-43fe-8a51-452e89ff244d" data-readdy="true">
+<view class="nav-item cursor-pointer">
+<uni-icons type="list" size="20" color="#ffffff"></uni-icons>
+<text class="nav-text">My Rides</text>
+</view>
+</a>
+</view>
+<view class="nav-section-title">VEHICLES</view>
+<view class="nav-section">
+<view class="nav-item cursor-pointer" v-if="userRole === 'driver' || userRole === 'admin'">
+<uni-icons type="car" size="20" color="#ffffff"></uni-icons>
+<text class="nav-text">My Vehicles</text>
+</view>
+<view class="nav-item cursor-pointer" v-if="userRole === 'driver' || userRole === 'admin'">
+<uni-icons type="plusempty" size="20" color="#ffffff"></uni-icons>
+<text class="nav-text">Add Vehicle</text>
+</view>
+</view>
+<view class="nav-section-title">PAYMENTS</view>
+<view class="nav-section">
+<view class="nav-item cursor-pointer">
+<uni-icons type="wallet" size="20" color="#ffffff"></uni-icons>
+<text class="nav-text">Wallet</text>
+</view>
+<view class="nav-item cursor-pointer">
+<uni-icons type="refresh" size="20" color="#ffffff"></uni-icons>
+<text class="nav-text">Transaction History</text>
+</view>
+</view>
+<view class="nav-section-title">ACCOUNT</view>
+<view class="nav-section">
+<view class="nav-item cursor-pointer">
+<uni-icons type="person" size="20" color="#ffffff"></uni-icons>
+<text class="nav-text">Profile</text>
+</view>
+<view class="nav-item cursor-pointer">
+<uni-icons type="gear" size="20" color="#ffffff"></uni-icons>
+<text class="nav-text">Settings</text>
+</view>
+<view class="nav-item cursor-pointer">
+<uni-icons type="arrow-right" size="20" color="#ffffff"></uni-icons>
+<text class="nav-text logout">Logout</text>
+</view>
+</view>
+</view>
+<!-- Main Content Area -->
+<view class="main-content">
+<!-- Header -->
+<view class="header">
+<view class="header-left">
+<uni-icons type="bars" size="24" color="#333333"></uni-icons>
+<text class="header-title">Dashboard</text>
+</view>
+<view class="search-container">
+<input type="text" class="search-input" placeholder="Search..." />
+<uni-icons type="search" size="20" color="#666666" class="search-icon"></uni-icons>
+</view>
+<view class="header-right">
+<view class="notification-icon cursor-pointer">
+<uni-icons type="notification" size="24" color="#333333"></uni-icons>
+<view class="notification-badge">3</view>
+</view>
+<view class="profile-icon cursor-pointer">
+<uni-icons type="person-filled" size="24" color="#333333"></uni-icons>
+</view>
+</view>
+</view>
+<!-- Dashboard Content -->
+<scroll-view class="dashboard-content" scroll-y="true">
+<!-- Role Indicator -->
+<view class="role-indicator">
+<text class="role-text">{{ roleText }}</text>
+</view>
+<!-- Stats Overview -->
+<view class="stats-overview">
+<view class="stat-card cursor-pointer">
+<view class="stat-icon">
+<uni-icons type="star-filled" size="32" color="#2563EB"></uni-icons>
+</view>
+<view class="stat-details">
+<text class="stat-value">{{ userRole === 'driver' ? '4.8/5.0' : (userRole === 'passenger' ? '12' : '156') }}</text>
+<text class="stat-label">{{ userRole === 'driver' ? 'Rating' : (userRole === 'passenger' ? 'Rides Taken' : 'Active Users') }}</text>
+</view>
+</view>
+<view class="stat-card cursor-pointer">
+<view class="stat-icon">
+<uni-icons type="car-filled" size="32" color="#22C55E"></uni-icons>
+</view>
+<view class="stat-details">
+<text class="stat-value">{{ userRole === 'driver' ? '28' : (userRole === 'passenger' ? '5' : '87') }}</text>
+<text class="stat-label">{{ userRole === 'driver' ? 'Rides Offered' : (userRole === 'passenger' ? 'Upcoming Rides' : 'Active Rides') }}</text>
+</view>
+</view>
+<view class="stat-card cursor-pointer">
+<view class="stat-icon">
+<uni-icons type="wallet" size="32" color="#F59E0B"></uni-icons>
+</view>
+<view class="stat-details">
+<text class="stat-value">{{ userRole === 'driver' ? '$342.50' : (userRole === 'passenger' ? '$78.25' : '$4,256.75') }}</text>
+<text class="stat-label">{{ userRole === 'driver' ? 'Earnings' : (userRole === 'passenger' ? 'Savings' : 'Total Revenue') }}</text>
+</view>
+</view>
+<view class="stat-card cursor-pointer">
+<view class="stat-icon">
+<uni-icons type="medal" size="32" color="#8B5CF6"></uni-icons>
+</view>
+<view class="stat-details">
+<text class="stat-value">{{ userRole === 'driver' ? '245 kg' : (userRole === 'passenger' ? '78 kg' : '12.5 tons') }}</text>
+<text class="stat-label">CO₂ Saved</text>
+</view>
+</view>
+</view>
+<!-- Charts Section -->
+<view class="charts-section">
+<view class="chart-container">
+<view class="chart-header">
+<text class="chart-title">{{ userRole === 'driver' ? 'Earnings Overview' : (userRole === 'passenger' ? 'Spending Analytics' : 'Platform Activity') }}</text>
+<view class="chart-actions cursor-pointer">
+<text class="chart-period active">Weekly</text>
+<text class="chart-period">Monthly</text>
+<text class="chart-period">Yearly</text>
+</view>
+</view>
+<view class="chart-placeholder">
+<image class="chart-image" :src="chartImage" mode="aspectFit"></image>
+</view>
+</view>
+</view>
+<!-- Recent Activity -->
+<view class="recent-activity">
+<view class="section-header">
+<text class="section-title">Recent Activity</text>
+<text class="view-all cursor-pointer">View All</text>
+</view>
+<view class="activity-list">
+<view class="activity-item cursor-pointer" v-for="(activity, index) in recentActivities" :key="index">
+<view class="activity-icon" :class="activity.iconClass">
+<uni-icons :type="activity.icon" size="24" color="#ffffff"></uni-icons>
+</view>
+<view class="activity-details">
+<text class="activity-title">{{ activity.title }}</text>
+<text class="activity-description">{{ activity.description }}</text>
+</view>
+<text class="activity-time">{{ activity.time }}</text>
+</view>
+</view>
+</view>
+<!-- Role-specific Content -->
+<view v-if="userRole === 'driver'" class="role-specific-section">
+<view class="section-header">
+<text class="section-title">My Vehicles</text>
+<text class="view-all cursor-pointer">Manage</text>
+</view>
+<view class="vehicles-list">
+<view class="vehicle-card cursor-pointer" v-for="(vehicle, index) in driverVehicles" :key="index">
+<image class="vehicle-image" :src="vehicle.image" mode="aspectFill"></image>
+<view class="vehicle-details">
+<text class="vehicle-name">{{ vehicle.name }}</text>
+<text class="vehicle-info">{{ vehicle.info }}</text>
+<view class="vehicle-status" :class="vehicle.statusClass">
+<text class="status-text">{{ vehicle.status }}</text>
+</view>
+</view>
+</view>
+<view class="add-vehicle-card cursor-pointer">
+<uni-icons type="plusempty" size="32" color="#2563EB"></uni-icons>
+<text class="add-vehicle-text">Add New Vehicle</text>
+</view>
+</view>
+</view>
+<view v-if="userRole === 'passenger'" class="role-specific-section">
+<view class="section-header">
+<text class="section-title">Available Rides</text>
+<text class="view-all cursor-pointer">See All</text>
+</view>
+<view class="available-rides">
+<view class="ride-card cursor-pointer" v-for="(ride, index) in availableRides" :key="index">
+<view class="ride-route">
+<view class="route-point">
+<view class="point-marker start"></view>
+<text class="point-location">{{ ride.from }}</text>
+</view>
+<view class="route-line"></view>
+<view class="route-point">
+<view class="point-marker end"></view>
+<text class="point-location">{{ ride.to }}</text>
+</view>
+</view>
+<view class="ride-details">
+<view class="ride-info">
+<uni-icons type="calendar" size="16" color="#64748B"></uni-icons>
+<text class="info-text">{{ ride.date }}</text>
+</view>
+<view class="ride-info">
+<uni-icons type="clock" size="16" color="#64748B"></uni-icons>
+<text class="info-text">{{ ride.time }}</text>
+</view>
+<view class="ride-info">
+<uni-icons type="person" size="16" color="#64748B"></uni-icons>
+<text class="info-text">{{ ride.seats }} seats available</text>
+</view>
+</view>
+<view class="ride-price-action">
+<text class="ride-price">${{ ride.price }}</text>
+<uni-button type="primary" size="mini" class="book-button">Book</uni-button>
+</view>
+</view>
+</view>
+</view>
+<view v-if="userRole === 'admin'" class="role-specific-section">
+<view class="section-header">
+<text class="section-title">User Management</text>
+<text class="view-all cursor-pointer">See All Users</text>
+</view>
+<view class="users-table">
+<view class="table-header">
+<text class="header-cell">User</text>
+<text class="header-cell">Role</text>
+<text class="header-cell">Status</text>
+<text class="header-cell">Joined</text>
+<text class="header-cell">Actions</text>
+</view>
+<view class="table-row cursor-pointer" v-for="(user, index) in adminUsers" :key="index">
+<view class="user-cell">
+<view class="user-avatar">
+<text class="avatar-text">{{ user.initials }}</text>
+</view>
+<text class="user-name">{{ user.name }}</text>
+</view>
+<text class="role-cell">{{ user.role }}</text>
+<view class="status-cell">
+<view class="status-indicator" :class="user.statusClass"></view>
+<text class="status-text">{{ user.status }}</text>
+</view>
+<text class="date-cell">{{ user.joined }}</text>
+<view class="actions-cell">
+<uni-icons type="more-filled" size="20" color="#64748B" class="cursor-pointer"></uni-icons>
+</view>
+</view>
+</view>
+</view>
+</scroll-view>
+</view>
+</view>
+</template>
+<script lang="ts" setup>
+import { ref, computed } from 'vue';
+// User role (can be changed to test different views)
+const userRole = ref('driver'); // Options: 'driver', 'passenger', 'admin'
+// Computed properties
+const roleText = computed(() => {
+switch (userRole.value) {
+case 'driver':
+return 'Driver Dashboard';
+case 'passenger':
+return 'Passenger Dashboard';
+case 'admin':
+return 'Admin Dashboard';
+default:
+return 'Dashboard';
+}
+});
+// Chart image based on role
+const chartImage = computed(() => {
+if (userRole.value === 'driver') {
+return 'https://readdy.ai/api/search-image?query=Professional%20line%20chart%20showing%20earnings%20trend%20over%20time%20with%20blue%20gradient%20bars%20and%20green%20line%20trend%2C%20white%20background%2C%20clean%20design%2C%20data%20visualization%2C%20financial%20analytics%20dashboard%2C%20weekly%20earnings%20report&width=600&height=300&seq=chart1&orientation=landscape';
+} else if (userRole.value === 'passenger') {
+return 'https://readdy.ai/api/search-image?query=Clean%20modern%20spending%20analytics%20chart%20with%20green%20and%20blue%20bars%20showing%20ride%20expenses%20over%20time%2C%20minimalist%20design%2C%20white%20background%2C%20financial%20dashboard%20visualization%2C%20travel%20expense%20tracking%2C%20weekly%20spending%20report&width=600&height=300&seq=chart2&orientation=landscape';
+} else {
+return 'https://readdy.ai/api/search-image?query=Platform%20activity%20dashboard%20visualization%20with%20multiple%20colored%20lines%20showing%20user%20growth%2C%20ride%20counts%2C%20and%20revenue%20metrics%2C%20professional%20business%20analytics%20chart%2C%20clean%20design%20on%20white%20background%2C%20admin%20dashboard%20statistics&width=600&height=300&seq=chart3&orientation=landscape';
+}
+});
+// Recent activities data
+const recentActivities = ref([
+{
+icon: 'car',
+iconClass: 'icon-blue',
+title: userRole.value === 'driver' ? 'Ride Completed' : 'Ride Booked',
+description: 'Downtown to Airport',
+time: '2 hours ago'
+},
+{
+icon: 'wallet',
+iconClass: 'icon-green',
+title: userRole.value === 'driver' ? 'Payment Received' : 'Payment Made',
+description: '$24.50',
+time: '5 hours ago'
+},
+{
+icon: 'star',
+iconClass: 'icon-orange',
+title: 'New Rating',
+description: '5 stars from John D.',
+time: '1 day ago'
+},
+{
+icon: userRole.value === 'admin' ? 'gear' : 'chat',
+iconClass: userRole.value === 'admin' ? 'icon-purple' : 'icon-blue',
+title: userRole.value === 'admin' ? 'System Update' : 'New Message',
+description: userRole.value === 'admin' ? 'v2.3.4 deployed' : 'From: Sarah M.',
+time: '2 days ago'
+}
+]);
+// Driver-specific data
+const driverVehicles = ref([
+{
+name: 'Toyota Prius',
+info: 'Hybrid • 4 Seats • ABC-1234',
+status: 'Verified',
+statusClass: 'status-verified',
+image: 'https://readdy.ai/api/search-image?query=icon%2C%203D%20photorealistic%20rendering%20of%20a%20clean%20white%20Toyota%20Prius%20car%2C%20high-detail%2C%20prominent%20main%20subject%2C%20clear%20and%20sharp%2C%20subject%20fills%2080%20percent%20of%20frame%2C%20isolated%20on%20white%20background%2C%20centered%20composition%2C%20soft%20lighting%2C%20subtle%20shadows%2C%20professional%20product%20photography%20style&width=120&height=80&seq=vehicle1&orientation=landscape'
+},
+{
+name: 'Honda Civic',
+info: 'Sedan • 4 Seats • XYZ-5678',
+status: 'Pending',
+statusClass: 'status-pending',
+image: 'https://readdy.ai/api/search-image?query=icon%2C%203D%20photorealistic%20rendering%20of%20a%20clean%20blue%20Honda%20Civic%20car%2C%20high-detail%2C%20prominent%20main%20subject%2C%20clear%20and%20sharp%2C%20subject%20fills%2080%20percent%20of%20frame%2C%20isolated%20on%20white%20background%2C%20centered%20composition%2C%20soft%20lighting%2C%20subtle%20shadows%2C%20professional%20product%20photography%20style&width=120&height=80&seq=vehicle2&orientation=landscape'
+}
+]);
+// Passenger-specific data
+const availableRides = ref([
+{
+from: 'Downtown',
+to: 'Airport',
+date: 'Apr 23, 2025',
+time: '10:30 AM',
+seats: 2,
+price: '24.50'
+},
+{
+from: 'University',
+to: 'Shopping Mall',
+date: 'Apr 23, 2025',
+time: '2:15 PM',
+seats: 3,
+price: '12.75'
+},
+{
+from: 'Tech Park',
+to: 'Central Station',
+date: 'Apr 24, 2025',
+time: '8:45 AM',
+seats: 1,
+price: '18.30'
+}
+]);
+// Admin-specific data
+const adminUsers = ref([
+{
+name: 'John Doe',
+initials: 'JD',
+role: 'Driver',
+status: 'Active',
+statusClass: 'status-active',
+joined: 'Jan 15, 2025'
+},
+{
+name: 'Sarah Miller',
+initials: 'SM',
+role: 'Passenger',
+status: 'Active',
+statusClass: 'status-active',
+joined: 'Feb 28, 2025'
+},
+{
+name: 'Robert Johnson',
+initials: 'RJ',
+role: 'Driver',
+status: 'Suspended',
+statusClass: 'status-suspended',
+joined: 'Dec 10, 2024'
+},
+{
+name: 'Emily Wilson',
+initials: 'EW',
+role: 'Passenger',
+status: 'Pending',
+statusClass: 'status-pending',
+joined: 'Apr 05, 2025'
+}
+]);
+</script>
+<style>
+page {
+height: 100%;
+}
+/* Global Styles */
+.container {
+display: flex;
+height: 100%;
+font-family: Arial, sans-serif;
+}
+.cursor-pointer {
+cursor: pointer;
+}
+/* Sidebar Styles */
+.sidebar {
+width: 250rpx;
+background-color: #1e40af;
+color: #ffffff;
+display: flex;
+flex-direction: column;
+flex-shrink: 0;
+}
+.logo-container {
+padding: 40rpx 20rpx;
+border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.logo {
+font-size: 20px;
+font-weight: bold;
+letter-spacing: 1px;
+}
+.nav-section {
+display: flex;
+flex-direction: column;
+padding: 10rpx 0;
+}
+.nav-section-title {
+font-size: 12px;
+color: rgba(255, 255, 255, 0.6);
+padding: 20rpx 30rpx;
+margin-top: 20rpx;
+}
+.nav-item {
+display: flex;
+align-items: center;
+padding: 20rpx 30rpx;
+transition: background-color 0.3s;
+}
+a {
+text-decoration: none;
+color: inherit;
+}
+.nav-item:hover {
+background-color: rgba(255, 255, 255, 0.1);
+}
+.nav-item.active {
+background-color: rgba(255, 255, 255, 0.15);
+border-left: 4rpx solid #ffffff;
+}
+.nav-text {
+margin-left: 20rpx;
+font-size: 14px;
+}
+.logout {
+color: #f87171;
+}
+/* Main Content Styles */
+.main-content {
+flex: 1;
+display: flex;
+flex-direction: column;
+background-color: #f8fafc;
+overflow: hidden;
+}
+/* Header Styles */
+.header {
+height: 120rpx;
+display: flex;
+align-items: center;
+justify-content: space-between;
+padding: 0 40rpx;
+background-color: #ffffff;
+border-bottom: 1px solid #e2e8f0;
+flex-shrink: 0;
+}
+.header-left {
+display: flex;
+align-items: center;
+}
+.header-title {
+font-size: 20px;
+font-weight: bold;
+margin-left: 20rpx;
+color: #1e293b;
+}
+.search-container {
+position: relative;
+width: 500rpx;
+}
+.search-input {
+width: 100%;
+height: 70rpx;
+border-radius: 35rpx;
+background-color: #f1f5f9;
+padding: 0 70rpx 0 30rpx;
+font-size: 14px;
+border: 1px solid #e2e8f0;
+}
+.search-icon {
+position: absolute;
+right: 30rpx;
+top: 50%;
+transform: translateY(-50%);
+}
+.header-right {
+display: flex;
+align-items: center;
+}
+.notification-icon {
+position: relative;
+margin-right: 30rpx;
+}
+.notification-badge {
+position: absolute;
+top: -10rpx;
+right: -10rpx;
+width: 36rpx;
+height: 36rpx;
+background-color: #ef4444;
+color: #ffffff;
+border-radius: 18rpx;
+font-size: 12px;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+/* Dashboard Content Styles */
+.dashboard-content {
+flex: 1;
+padding: 40rpx;
+overflow: auto;
+}
+.role-indicator {
+margin-bottom: 40rpx;
+}
+.role-text {
+font-size: 24px;
+font-weight: bold;
+color: #1e293b;
+}
+/* Stats Overview Styles */
+.stats-overview {
+display: flex;
+justify-content: space-between;
+margin-bottom: 40rpx;
+}
+.stat-card {
+width: 22%;
+background-color: #ffffff;
+border-radius: 20rpx;
+padding: 30rpx;
+box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+display: flex;
+align-items: center;
+transition: transform 0.3s, box-shadow 0.3s;
+}
+.stat-card:hover {
+transform: translateY(-6rpx);
+box-shadow: 0 10rpx 20rpx rgba(0, 0, 0, 0.1);
+}
+.stat-icon {
+margin-right: 20rpx;
+width: 80rpx;
+height: 80rpx;
+border-radius: 40rpx;
+background-color: rgba(37, 99, 235, 0.1);
+display: flex;
+align-items: center;
+justify-content: center;
+flex-shrink: 0;
+}
+.stat-details {
+display: flex;
+flex-direction: column;
+}
+.stat-value {
+font-size: 20px;
+font-weight: bold;
+color: #1e293b;
+margin-bottom: 6rpx;
+}
+.stat-label {
+font-size: 14px;
+color: #64748b;
+}
+/* Charts Section Styles */
+.charts-section {
+margin-bottom: 40rpx;
+}
+.chart-container {
+background-color: #ffffff;
+border-radius: 20rpx;
+padding: 30rpx;
+box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+}
+.chart-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 20rpx;
+}
+.chart-title {
+font-size: 18px;
+font-weight: bold;
+color: #1e293b;
+}
+.chart-actions {
+display: flex;
+}
+.chart-period {
+font-size: 14px;
+color: #64748b;
+margin-left: 20rpx;
+padding: 10rpx 20rpx;
+border-radius: 16rpx;
+transition: background-color 0.3s, color 0.3s;
+}
+.chart-period.active {
+background-color: #2563eb;
+color: #ffffff;
+}
+.chart-placeholder {
+height: 300rpx;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+.chart-image {
+width: 100%;
+height: 300rpx;
+}
+/* Recent Activity Styles */
+.recent-activity {
+margin-bottom: 40rpx;
+}
+.section-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 20rpx;
+}
+.section-title {
+font-size: 18px;
+font-weight: bold;
+color: #1e293b;
+}
+.view-all {
+font-size: 14px;
+color: #2563eb;
+}
+.activity-list {
+background-color: #ffffff;
+border-radius: 20rpx;
+box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+overflow: hidden;
+}
+.activity-item {
+display: flex;
+align-items: center;
+padding: 30rpx;
+border-bottom: 1px solid #f1f5f9;
+transition: background-color 0.3s;
+}
+.activity-item:last-child {
+border-bottom: none;
+}
+.activity-item:hover {
+background-color: #f8fafc;
+}
+.activity-icon {
+width: 80rpx;
+height: 80rpx;
+border-radius: 40rpx;
+display: flex;
+align-items: center;
+justify-content: center;
+margin-right: 20rpx;
+flex-shrink: 0;
+}
+.icon-blue {
+background-color: #2563eb;
+}
+.icon-green {
+background-color: #22c55e;
+}
+.icon-orange {
+background-color: #f59e0b;
+}
+.icon-purple {
+background-color: #8b5cf6;
+}
+.activity-details {
+flex: 1;
+}
+.activity-title {
+font-size: 16px;
+font-weight: bold;
+color: #1e293b;
+margin-bottom: 6rpx;
+}
+.activity-description {
+font-size: 14px;
+color: #64748b;
+}
+.activity-time {
+font-size: 14px;
+color: #94a3b8;
+}
+/* Role-specific Styles */
+.role-specific-section {
+margin-bottom: 40rpx;
+}
+/* Driver Styles */
+.vehicles-list {
+display: flex;
+flex-wrap: wrap;
+gap: 20rpx;
+}
+.vehicle-card {
+width: calc(33.33% - 20rpx);
+background-color: #ffffff;
+border-radius: 20rpx;
+overflow: hidden;
+box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+transition: transform 0.3s, box-shadow 0.3s;
+}
+.vehicle-card:hover {
+transform: translateY(-6rpx);
+box-shadow: 0 10rpx 20rpx rgba(0, 0, 0, 0.1);
+}
+.vehicle-image {
+width: 100%;
+height: 160rpx;
+object-fit: cover;
+}
+.vehicle-details {
+padding: 20rpx;
+}
+.vehicle-name {
+font-size: 16px;
+font-weight: bold;
+color: #1e293b;
+margin-bottom: 6rpx;
+}
+.vehicle-info {
+font-size: 14px;
+color: #64748b;
+margin-bottom: 10rpx;
+}
+.vehicle-status {
+display: inline-block;
+padding: 6rpx 16rpx;
+border-radius: 16rpx;
+font-size: 12px;
+}
+.status-verified {
+background-color: rgba(34, 197, 94, 0.1);
+color: #22c55e;
+}
+.status-pending {
+background-color: rgba(245, 158, 11, 0.1);
+color: #f59e0b;
+}
+.add-vehicle-card {
+width: calc(33.33% - 20rpx);
+background-color: rgba(37, 99, 235, 0.05);
+border: 2px dashed #2563eb;
+border-radius: 20rpx;
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+padding: 40rpx;
+transition: background-color 0.3s;
+}
+.add-vehicle-card:hover {
+background-color: rgba(37, 99, 235, 0.1);
+}
+.add-vehicle-text {
+font-size: 16px;
+color: #2563eb;
+margin-top: 20rpx;
+}
+/* Passenger Styles */
+.available-rides {
+display: flex;
+flex-direction: column;
+gap: 20rpx;
+}
+.ride-card {
+display: flex;
+background-color: #ffffff;
+border-radius: 20rpx;
+padding: 30rpx;
+box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+transition: transform 0.3s, box-shadow 0.3s;
+}
+.ride-card:hover {
+transform: translateY(-6rpx);
+box-shadow: 0 10rpx 20rpx rgba(0, 0, 0, 0.1);
+}
+.ride-route {
+display: flex;
+flex-direction: column;
+margin-right: 40rpx;
+width: 200rpx;
+flex-shrink: 0;
+}
+.route-point {
+display: flex;
+align-items: center;
+margin-bottom: 10rpx;
+}
+.point-marker {
+width: 20rpx;
+height: 20rpx;
+border-radius: 10rpx;
+margin-right: 10rpx;
+flex-shrink: 0;
+}
+.start {
+background-color: #22c55e;
+}
+.end {
+background-color: #ef4444;
+}
+.route-line {
+width: 4rpx;
+height: 40rpx;
+background-color: #e2e8f0;
+margin-left: 8rpx;
+}
+.point-location {
+font-size: 14px;
+color: #1e293b;
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+}
+.ride-details {
+flex: 1;
+display: flex;
+flex-direction: column;
+justify-content: center;
+}
+.ride-info {
+display: flex;
+align-items: center;
+margin-bottom: 10rpx;
+}
+.info-text {
+font-size: 14px;
+color: #64748b;
+margin-left: 10rpx;
+}
+.ride-price-action {
+display: flex;
+flex-direction: column;
+align-items: flex-end;
+justify-content: center;
+}
+.ride-price {
+font-size: 20px;
+font-weight: bold;
+color: #1e293b;
+margin-bottom: 10rpx;
+}
+.book-button {
+background-color: #2563eb;
+color: #ffffff;
+}
+/* Admin Styles */
+.users-table {
+background-color: #ffffff;
+border-radius: 20rpx;
+overflow: hidden;
+box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+}
+.table-header {
+display: flex;
+background-color: #f8fafc;
+padding: 20rpx 30rpx;
+border-bottom: 1px solid #e2e8f0;
+}
+.header-cell {
+font-size: 14px;
+font-weight: bold;
+color: #64748b;
+}
+.table-row {
+display: flex;
+padding: 20rpx 30rpx;
+border-bottom: 1px solid #f1f5f9;
+transition: background-color 0.3s;
+}
+.table-row:last-child {
+border-bottom: none;
+}
+.table-row:hover {
+background-color: #f8fafc;
+}
+.header-cell,
+.user-cell,
+.role-cell,
+.status-cell,
+.date-cell,
+.actions-cell {
+flex: 1;
+display: flex;
+align-items: center;
+}
+.user-cell {
+flex: 2;
+}
+.user-avatar {
+width: 60rpx;
+height: 60rpx;
+border-radius: 30rpx;
+background-color: #2563eb;
+color: #ffffff;
+display: flex;
+align-items: center;
+justify-content: center;
+margin-right: 20rpx;
+font-size: 14px;
+font-weight: bold;
+}
+.user-name {
+font-size: 14px;
+color: #1e293b;
+}
+.status-indicator {
+width: 16rpx;
+height: 16rpx;
+border-radius: 8rpx;
+margin-right: 10rpx;
+}
+.status-active {
+background-color: #22c55e;
+}
+.status-pending {
+background-color: #f59e0b;
+}
+.status-suspended {
+background-color: #ef4444;
+}
+.status-text {
+font-size: 14px;
+color: #64748b;
+}
+</style>

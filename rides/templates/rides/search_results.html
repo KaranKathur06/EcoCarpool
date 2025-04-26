@@ -1,0 +1,328 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Search Rides - EcoCarpool{% endblock %}
+
+{% block content %}
+<div class="search-container">
+    <div class="search-header">
+        <h1>Find Your Ride</h1>
+        <p>Search for available rides and book your journey</p>
+    </div>
+
+    <!-- Search Form -->
+    <div class="search-form-container">
+        <form method="GET" class="search-form">
+            <div class="form-group">
+                <label for="departure">From</label>
+                <div class="input-with-icon">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <input type="text" id="departure" name="departure" 
+                           value="{{ request.GET.departure }}" placeholder="Enter departure location">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="destination">To</label>
+                <div class="input-with-icon">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <input type="text" id="destination" name="destination" 
+                           value="{{ request.GET.destination }}" placeholder="Enter destination">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="date">Date</label>
+                <div class="input-with-icon">
+                    <i class="fas fa-calendar"></i>
+                    <input type="date" id="date" name="date" value="{{ request.GET.date }}">
+                </div>
+            </div>
+            <button type="submit" class="search-btn">
+                <i class="fas fa-search"></i>
+                Search Rides
+            </button>
+        </form>
+    </div>
+
+    <!-- Results -->
+    <div class="search-results">
+        {% if rides %}
+            {% for ride in rides %}
+                <div class="ride-card">
+                    <div class="ride-info">
+                        <div class="time-price">
+                            <div class="time">
+                                <i class="fas fa-clock"></i>
+                                <span>{{ ride.departure_time|date:"g:i A" }}</span>
+                                <div class="date">{{ ride.departure_time|date:"D, M d, Y" }}</div>
+                            </div>
+                            <div class="price">
+                                <span class="amount">₹{{ ride.price }}</span>
+                                <span class="per-seat">per seat</span>
+                            </div>
+                        </div>
+                        <div class="locations">
+                            <div class="location-item">
+                                <i class="fas fa-circle start"></i>
+                                <span>{{ ride.departure_location }}</span>
+                            </div>
+                            <div class="route-line"></div>
+                            <div class="location-item">
+                                <i class="fas fa-circle end"></i>
+                                <span>{{ ride.arrival_location }}</span>
+                            </div>
+                        </div>
+                        <div class="ride-details">
+                            <div class="seats">
+                                <i class="fas fa-users"></i>
+                                <span>{{ ride.available_seats }} seats available</span>
+                            </div>
+                            <a href="{% url 'rides:ride-detail' ride.id %}" class="view-btn">View Details</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            {% if request.GET %}
+                <div class="no-results">
+                    <img src="{% static 'images/no-results.svg' %}" alt="No rides found">
+                    <h3>No rides found</h3>
+                    <p>Try adjusting your search criteria or check back later.</p>
+                </div>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .search-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .search-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .search-header h1 {
+        color: #4e73df;
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .search-header p {
+        color: #6c757d;
+    }
+
+    .search-form-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .search-form {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        align-items: end;
+    }
+
+    .form-group {
+        margin-bottom: 0;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #4a5568;
+        font-weight: 500;
+    }
+
+    .input-with-icon {
+        position: relative;
+    }
+
+    .input-with-icon i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #4e73df;
+    }
+
+    .input-with-icon input {
+        width: 100%;
+        padding: 0.75rem 1rem 0.75rem 2.5rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .input-with-icon input:focus {
+        border-color: #4e73df;
+        box-shadow: 0 0 0 3px rgba(78, 115, 223, 0.1);
+        outline: none;
+    }
+
+    .search-btn {
+        background: #4e73df;
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .search-btn:hover {
+        background: #2e59d9;
+        transform: translateY(-1px);
+    }
+
+    .ride-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        margin-bottom: 1rem;
+        transition: transform 0.3s ease;
+    }
+
+    .ride-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .ride-info {
+        padding: 1.5rem;
+    }
+
+    .time-price {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .time {
+        color: #4e73df;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    .time .date {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+
+    .price {
+        text-align: right;
+    }
+
+    .price .amount {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #4e73df;
+    }
+
+    .price .per-seat {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+
+    .locations {
+        position: relative;
+        padding: 1rem 0;
+    }
+
+    .location-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin: 0.5rem 0;
+    }
+
+    .route-line {
+        position: absolute;
+        left: 0.35rem;
+        top: 2rem;
+        bottom: 2rem;
+        width: 2px;
+        background: #e2e8f0;
+    }
+
+    .location-item i {
+        font-size: 0.75rem;
+        color: #4e73df;
+    }
+
+    .location-item i.start {
+        color: #48bb78;
+    }
+
+    .location-item i.end {
+        color: #e53e3e;
+    }
+
+    .ride-details {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .seats {
+        color: #6c757d;
+    }
+
+    .view-btn {
+        background: #4e73df;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .view-btn:hover {
+        background: #2e59d9;
+        color: white;
+    }
+
+    .no-results {
+        text-align: center;
+        padding: 3rem;
+    }
+
+    .no-results img {
+        max-width: 200px;
+        margin-bottom: 1.5rem;
+    }
+
+    .no-results h3 {
+        color: #4a5568;
+        margin-bottom: 0.5rem;
+    }
+
+    .no-results p {
+        color: #6c757d;
+    }
+
+    @media (max-width: 768px) {
+        .search-form {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %} 

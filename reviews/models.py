@@ -1,14 +1,33 @@
 from django.db import models
-from users.models import CustomUser
-from bookings.models import Booking
+from django.conf import settings
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 class Review(models.Model):
-    RATING_CHOICES = [(i, i) for i in range(1, 6)]
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    booking = models.ForeignKey(Booking, on_delete=models.CASCADE)
-    rating = models.PositiveSmallIntegerField(choices=RATING_CHOICES)
+    reviewer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='reviews_given'
+    )
+    reviewed = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='reviews_received'
+    )
+    booking = models.OneToOneField(
+        'rides.Booking',
+        on_delete=models.CASCADE,
+        related_name='review'
+    )
+    rating = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
     comment = models.TextField()
-    review_date = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        unique_together = ['reviewer', 'booking']
 
     def __str__(self):
-        return f"Review by {self.user.email} for Booking #{self.booking.id}"
+        return f"Review by {self.reviewer} for {self.reviewed}"

@@ -1,0 +1,92 @@
+{% load static %}
+{% load custom_filters %}
+
+<nav class="navbar navbar-expand-lg navbar-light">
+    <div class="container-fluid d-flex justify-content-between align-items-center">
+        <!-- Left side -->
+        <div class="d-flex align-items-center">
+            <button id="sidebarCollapse" class="btn btn-link me-3">
+                <i class="fas fa-bars text-gray-600"></i>
+            </button>
+            <h1 class="h4 mb-0 text-gray-800">
+                {{ request.resolver_match.url_name|format_page_title }}
+            </h1>
+        </div>
+
+        <!-- Right side -->
+        <div class="d-flex align-items-center">
+            <!-- Search -->
+            <div class="position-relative me-3 d-none d-md-block">
+                <input type="text" class="form-control bg-light border-0 small" placeholder="Search..." 
+                       style="padding-right: 2.5rem; min-width: 300px; border-radius: 0.5rem;">
+                <div class="position-absolute top-50 end-0 translate-middle-y pe-3">
+                    <i class="fas fa-search text-gray-600"></i>
+                </div>
+            </div>
+
+            <!-- Notifications -->
+            <div class="dropdown me-3">
+                <button class="btn btn-link position-relative p-0" type="button" data-bs-toggle="dropdown">
+                    <div class="avatar-circle" style="width: 36px; height: 36px;">
+                        <i class="fas fa-bell text-gray-600"></i>
+                    </div>
+                    <span class="notification-badge">3</span>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end mt-2" style="width: 320px;">
+                    <h6 class="dropdown-header d-flex justify-content-between align-items-center">
+                        Notifications
+                        <span class="badge bg-primary rounded-pill">3 New</span>
+                    </h6>
+                    <a class="dropdown-item d-flex align-items-center py-3" href="#">
+                        <div class="me-3">
+                            <div class="avatar-circle bg-primary bg-opacity-10">
+                                <i class="fas fa-car text-primary"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="mb-1 font-weight-bold">New Ride Request</p>
+                            <p class="small text-gray-600 mb-0">3 minutes ago</p>
+                        </div>
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item text-center small text-gray-600" href="#">Show All Notifications</a>
+                </div>
+            </div>
+
+            <!-- Profile -->
+            <div class="dropdown">
+                <button class="btn btn-link d-flex align-items-center p-0" type="button" data-bs-toggle="dropdown">
+                    {% if user.profile_picture %}
+                        <img src="{{ user.profile_picture.url }}" alt="Profile" 
+                             class="rounded-circle border-2 border-white shadow-sm" 
+                             style="width: 40px; height: 40px; object-fit: cover;">
+                    {% else %}
+                        <div class="avatar-circle">
+                            <i class="fas fa-user"></i>
+                        </div>
+                    {% endif %}
+                </button>
+                <div class="dropdown-menu dropdown-menu-end mt-2">
+                    <div class="px-4 py-3">
+                        <h6 class="text-sm">Welcome back!</h6>
+                        <p class="text-sm mb-0 font-weight-bold">{{ user.get_full_name|default:user.username }}</p>
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="{% url 'users:profile' %}">
+                        <i class="fas fa-user-circle me-2 text-gray-600"></i>
+                        My Profile
+                    </a>
+                    <a class="dropdown-item" href="{% url 'users:settings' %}">
+                        <i class="fas fa-cog me-2 text-gray-600"></i>
+                        Settings
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item text-danger" href="{% url 'users:logout' %}">
+                        <i class="fas fa-sign-out-alt me-2"></i>
+                        Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav> 

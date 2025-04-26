@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Book Ride - EcoCarpool{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Book Ride</h4>
+                </div>
+                <div class="card-body">
+                    <div class="ride-details mb-4">
+                        <h5>Ride Details</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>From:</strong> {{ ride.start_location }}</p>
+                                <p><strong>To:</strong> {{ ride.end_location }}</p>
+                                <p><strong>Date:</strong> {{ ride.ride_date|date:"M d, Y" }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Time:</strong> {{ ride.ride_time|time:"g:i A" }}</p>
+                                <p><strong>Available Seats:</strong> {{ ride.available_seats }}</p>
+                                <p><strong>Price per Seat:</strong> ${{ ride.price_per_seat }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post" class="booking-form">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-check me-2"></i>Confirm Booking
+                            </button>
+                            <a href="{% url 'rides:ride-detail' ride.id %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard Statistics{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Dashboard Statistics</h2>
+
+    {% if error %}
+    <div class="alert alert-danger">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- Monthly Statistics -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Monthly Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="monthlyStatsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Daily Statistics -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Daily Statistics (Last Week)</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="dailyStatsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Statistics -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">User Registration Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="userStatsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Booking Statistics -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Booking Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="bookingStatsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Monthly Statistics Chart
+    const monthlyStatsCtx = document.getElementById('monthlyStatsChart').getContext('2d');
+    new Chart(monthlyStatsCtx, {
+        type: 'line',
+        data: {
+            labels: {{ monthly_stats|safe }}.map(stat => new Date(stat.month).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })),
+            datasets: [{
+                label: 'Total Rides',
+                data: {{ monthly_stats|safe }}.map(stat => stat.total_rides),
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1
+            }, {
+                label: 'Total Earnings',
+                data: {{ monthly_stats|safe }}.map(stat => stat.total_earnings),
+                borderColor: 'rgb(255, 99, 132)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Daily Statistics Chart
+    const dailyStatsCtx = document.getElementById('dailyStatsChart').getContext('2d');
+    new Chart(dailyStatsCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ daily_stats|safe }}.map(stat => new Date(stat.day).toLocaleDateString('en-US', { weekday: 'short' })),
+            datasets: [{
+                label: 'Total Rides',
+                data: {{ daily_stats|safe }}.map(stat => stat.total_rides),
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgb(75, 192, 192)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // User Statistics Chart
+    const userStatsCtx = document.getElementById('userStatsChart').getContext('2d');
+    new Chart(userStatsCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ user_stats|safe }}.map(stat => new Date(stat.month).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })),
+            datasets: [{
+                label: 'New Users',
+                data: {{ user_stats|safe }}.map(stat => stat.new_users),
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgb(54, 162, 235)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Booking Statistics Chart
+    const bookingStatsCtx = document.getElementById('bookingStatsChart').getContext('2d');
+    new Chart(bookingStatsCtx, {
+        type: 'line',
+        data: {
+            labels: {{ booking_stats|safe }}.map(stat => new Date(stat.month).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })),
+            datasets: [{
+                label: 'Total Bookings',
+                data: {{ booking_stats|safe }}.map(stat => stat.total_bookings),
+                borderColor: 'rgb(153, 102, 255)',
+                tension: 0.1
+            }, {
+                label: 'Total Revenue',
+                data: {{ booking_stats|safe }}.map(stat => stat.total_revenue),
+                borderColor: 'rgb(255, 159, 64)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
+{% endblock %} 

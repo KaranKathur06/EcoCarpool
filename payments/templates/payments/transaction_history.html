@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Transaction History - EcoCarpool{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Monthly Statistics -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-primary mb-4">Monthly Statistics</h5>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h6 class="text-muted mb-1">Income</h6>
+                            <h4 class="text-success mb-0">₹{{ monthly_income }}</h4>
+                        </div>
+                        <div class="text-end">
+                            <h6 class="text-muted mb-1">Expenses</h6>
+                            <h4 class="text-danger mb-0">₹{{ monthly_expenses }}</h4>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Balance</h6>
+                            <h4 class="text-primary mb-0">₹{{ wallet.balance }}</h4>
+                        </div>
+                        <a href="{% url 'payments:wallet' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-wallet me-2"></i>Go to Wallet
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transaction History -->
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-primary mb-4">Transaction History</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transaction in transactions %}
+                                <tr>
+                                    <td>{{ transaction.created_at|date:"M d, Y H:i" }}</td>
+                                    <td>
+                                        {% if transaction.transaction_type == 'DEPOSIT' %}
+                                            <span class="badge bg-success">Deposit</span>
+                                        {% elif transaction.transaction_type == 'WITHDRAWAL' %}
+                                            <span class="badge bg-danger">Withdrawal</span>
+                                        {% elif transaction.transaction_type == 'PAYMENT' %}
+                                            <span class="badge bg-primary">Payment</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ transaction.transaction_type }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="{% if transaction.transaction_type == 'DEPOSIT' %}text-success{% elif transaction.transaction_type == 'WITHDRAWAL' %}text-danger{% else %}text-primary{% endif %}">
+                                        ₹{{ transaction.amount }}
+                                    </td>
+                                    <td>
+                                        {% if transaction.status == 'completed' %}
+                                            <span class="badge bg-success">Completed</span>
+                                        {% elif transaction.status == 'pending' %}
+                                            <span class="badge bg-warning">Pending</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Failed</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'payments:transaction-detail' transaction.id %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-info-circle"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4">
+                                        <i class="fas fa-history fa-2x text-muted mb-3"></i>
+                                        <p class="text-muted mb-0">No transactions found</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if is_paginated %}
+                    <nav aria-label="Page navigation" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+
+                            {% for num in page_obj.paginator.page_range %}
+                            <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                            {% endfor %}
+
+                            {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card {
+        border: none;
+        border-radius: 10px;
+    }
+    .table th {
+        border-top: none;
+        font-weight: 600;
+    }
+    .badge {
+        padding: 0.5em 0.8em;
+    }
+    .btn-outline-primary:hover {
+        background-color: var(--bs-primary);
+        color: white;
+    }
+    .pagination .page-link {
+        border: none;
+        margin: 0 5px;
+        border-radius: 5px;
+    }
+    .pagination .page-item.active .page-link {
+        background-color: var(--bs-primary);
+    }
+</style>
+{% endblock %} 

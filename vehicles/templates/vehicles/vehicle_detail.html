@@ -1,0 +1,276 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .vehicle-photo {
+        width: 100%;
+        height: 300px;
+        object-fit: cover;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .card {
+        border: none;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        border-radius: 8px;
+    }
+    
+    .card-body {
+        padding: 1.5rem;
+    }
+    
+    .list-unstyled li {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .list-unstyled li:last-child {
+        border-bottom: none;
+    }
+    
+    .text-muted {
+        color: #6c757d !important;
+    }
+    
+    .badge {
+        padding: 0.5em 1em;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block title %}{{ vehicle.company }} {{ vehicle.model }} - EcoCarpool{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-white border-bottom-0 pt-4 px-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="mb-0 fw-bold">{{ vehicle.company }} {{ vehicle.model }}</h4>
+                {% if vehicle.is_active %}
+                    <span class="badge rounded-pill text-success bg-success-subtle border border-success-subtle px-3 py-2">Active</span>
+                {% else %}
+                    <span class="badge rounded-pill text-danger bg-danger-subtle border border-danger-subtle px-3 py-2">Inactive</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card-body p-4">
+            <div class="row">
+                <!-- Vehicle Image -->
+                <div class="col-md-4 mb-4 mb-md-0">
+                    {% if vehicle.vehicle_photo %}
+                        <img src="{{ vehicle.vehicle_photo.url }}" alt="{{ vehicle }}" class="img-fluid rounded vehicle-photo">
+                    {% else %}
+                        <div class="text-center py-5 bg-light rounded">
+                            <i class="fas fa-car fa-4x text-muted mb-3"></i>
+                            <p class="text-muted mb-0">No vehicle photo available</p>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Vehicle Details -->
+                <div class="col-md-8">
+                    <div class="row">
+                        <!-- Basic Information -->
+                        <div class="col-md-6">
+                            <h5 class="fw-bold mb-3">Basic Information</h5>
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="fas fa-car-side text-primary me-2"></i>
+                                    <span class="text-muted">Type:</span> {{ vehicle.vehicle_type.name }}
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-calendar text-primary me-2"></i>
+                                    <span class="text-muted">Year:</span> {{ vehicle.year }}
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-palette text-primary me-2"></i>
+                                    <span class="text-muted">Color:</span> {{ vehicle.color }}
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Additional Details -->
+                        <div class="col-md-6">
+                            <h5 class="fw-bold mb-3">Additional Details</h5>
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="fas fa-users text-primary me-2"></i>
+                                    <span class="text-muted">Seating Capacity:</span> {{ vehicle.seating_capacity }} seats
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-id-card text-primary me-2"></i>
+                                    <span class="text-muted">License Plate:</span> {{ vehicle.license_plate }}
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-clock text-primary me-2"></i>
+                                    <span class="text-muted">Added:</span> {{ vehicle.created_at|date:"M d, Y" }}
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Vehicle Stats -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h5 class="fw-bold mb-3">Vehicle Statistics</h5>
+                            <div class="row g-2">
+                                <div class="col-md-4">
+                                    <div class="p-3 bg-light rounded text-center">
+                                        <h3 class="mb-1">{{ vehicle.get_total_rides }}</h3>
+                                        <small class="text-muted">Total Rides</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="p-3 bg-light rounded text-center">
+                                        <h3 class="mb-1">{{ vehicle.get_active_rides }}</h3>
+                                        <small class="text-muted">Active Rides</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="p-3 bg-light rounded text-center">
+                                        <h3 class="mb-1">{{ vehicle.get_completed_rides }}</h3>
+                                        <small class="text-muted">Completed Rides</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Technical Details -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <h5 class="fw-bold mb-3">Technical Details</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="fas fa-gas-pump text-primary me-2"></i>
+                                    <span class="text-muted">Fuel Type:</span> {{ vehicle.get_fuel_type_display }}
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-cog text-primary me-2"></i>
+                                    <span class="text-muted">Transmission:</span> {{ vehicle.get_transmission_display }}
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="fas fa-tachometer-alt text-primary me-2"></i>
+                                    <span class="text-muted">Mileage:</span> 
+                                    {% if vehicle.mileage %}
+                                        {{ vehicle.mileage }} km/l
+                                    {% else %}
+                                        Not specified
+                                    {% endif %}
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check-circle text-primary me-2"></i>
+                                    <span class="text-muted">Status:</span>
+                                    {% if vehicle.is_active %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Inactive</span>
+                                    {% endif %}
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documents Section -->
+            <div class="mt-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0">Vehicle Documents</h5>
+                    {% if user == vehicle.driver %}
+                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addDocumentModal">
+                            <i class="fas fa-plus me-1"></i> Add Document
+                        </button>
+                    {% endif %}
+                </div>
+                {% if documents %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Document Type</th>
+                                    <th>Uploaded</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for doc in documents %}
+                                    <tr>
+                                        <td>{{ doc.get_document_type_display }}</td>
+                                        <td>{{ doc.uploaded_at|date:"M d, Y" }}</td>
+                                        <td>
+                                            <a href="{{ doc.document.url }}" class="btn btn-sm btn-outline-primary me-2" target="_blank">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if user == vehicle.driver %}
+                                                <a href="{% url 'vehicles:delete-document' doc.pk %}" class="btn btn-sm btn-outline-danger">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4 bg-light rounded">
+                        <i class="fas fa-file-alt fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-0">No documents uploaded yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="mt-4 d-flex gap-2 justify-content-end">
+                <a href="{% url 'vehicles:vehicle-list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Back to Vehicles
+                </a>
+                {% if user == vehicle.driver %}
+                    <a href="{% url 'vehicles:vehicle-update' vehicle.pk %}" class="btn btn-primary">
+                        <i class="fas fa-edit me-1"></i> Edit Vehicle
+                    </a>
+                    <a href="{% url 'vehicles:vehicle-delete' vehicle.pk %}" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i> Delete Vehicle
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Document Modal -->
+{% if user == vehicle.driver %}
+    <div class="modal fade" id="addDocumentModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Vehicle Document</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="post" action="{% url 'vehicles:add-document' vehicle.pk %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        {{ document_form.as_p }}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Upload Document</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %} 

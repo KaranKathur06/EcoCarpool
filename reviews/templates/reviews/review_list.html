@@ -1,33 +1,33 @@
 {% extends 'base.html' %}
+
+{% block title %}Reviews - EcoCarpool{% endblock %}
+
 {% block content %}
-<div class="container-fluid">
-    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
-        <h1 class="h2">All Reviews</h1>
-    </div>
-    
+<div class="container">
+    <h2>Reviews</h2>
     <div class="row">
         {% for review in reviews %}
-        <div class="col-md-6 mb-4">
+        <div class="col-md-6 mb-3">
             <div class="card">
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="card-title">{{ review.user.username }}</h5>
-                        <div class="text-warning">
-                            {% for _ in "12345" %}
-                                {% if forloop.counter <= review.rating %}
-                                    ★
-                                {% else %}
-                                    ☆
-                                {% endif %}
-                            {% endfor %}
-                        </div>
+                    <h5 class="card-title">Review by {{ review.reviewer.get_full_name }}</h5>
+                    <div class="stars mb-2">
+                        {% for i in "12345"|make_list %}
+                            {% if forloop.counter <= review.rating %}
+                                <i class="fas fa-star text-warning"></i>
+                            {% else %}
+                                <i class="far fa-star"></i>
+                            {% endif %}
+                        {% endfor %}
                     </div>
                     <p class="card-text">{{ review.comment }}</p>
-                    <small class="text-muted">
-                        Review for Ride #{{ review.ride.id }} - {{ review.created_at }}
-                    </small>
+                    <small class="text-muted">{{ review.created_at|date:"M d, Y" }}</small>
                 </div>
             </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <p>No reviews found.</p>
         </div>
         {% endfor %}
     </div>

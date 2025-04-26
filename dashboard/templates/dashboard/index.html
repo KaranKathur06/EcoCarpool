@@ -1,0 +1,865 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    /* Banner styles */
+    .dashboard-header {
+        position: relative;
+        width: 90%;
+        max-width: 1200px;
+        height: 120px;
+        margin: 0.25rem auto 1rem auto;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .header-image {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center 30%;
+    }
+
+    .header-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(to right, rgba(47, 128, 237, 0.75), rgba(86, 204, 242, 0.75));
+    }
+
+    .dashboard-header-content {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        color: white;
+        z-index: 1;
+        width: 90%;
+        padding: 0 20px;
+    }
+
+    .dashboard-header h2 {
+        font-size: 1.5rem;
+        margin: 0;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    }
+
+    .dashboard-header p {
+        margin: 3px 0 0;
+        font-size: 0.85rem;
+        opacity: 0.9;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    }
+
+    @media screen and (max-width: 768px) {
+        .dashboard-header {
+            height: 100px;
+            width: 95%;
+        }
+
+        .dashboard-header h2 {
+            font-size: 1.15rem;
+        }
+
+        .dashboard-header p {
+            font-size: 0.75rem;
+        }
+    }
+
+    /* Card adjustments */
+    .card {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        border: none;
+        margin-bottom: 1rem;
+    }
+
+    .stats-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Chart container adjustments */
+    .chart-container {
+        position: relative;
+        height: 250px !important;
+    }
+
+    .chart-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .container-fluid {
+            padding: 1rem !important;
+        }
+
+        .chart-container {
+            height: 200px !important;
+        }
+    }
+
+    /* Adjust container padding */
+    .container-fluid {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Fixed-Height Banner/Header -->
+<div class="dashboard-header">
+    <img src="{% static 'images/inner carpool.jpeg' %}" alt="Carpool Dashboard" class="header-image">
+    <div class="header-overlay"></div>
+    <div class="dashboard-header-content">
+        <h2>Welcome to EcoCarpool Dashboard</h2>
+        <p>Your sustainable ride-sharing management platform.</p>
+    </div>
+</div>
+
+<div class="container-fluid px-4 py-3">
+    {% if request.user.role == 'admin' %}
+    <!-- Admin Stats -->
+    <div class="row g-3 mb-3">
+        <!-- Total Users -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="stats-icon bg-light-primary rounded-circle me-3">
+                            <i class="fas fa-users text-primary"></i>
+                        </div>
+                        <h6 class="text-muted mb-0">Total Users</h6>
+                    </div>
+                    <h3 class="mb-2">{{ total_users|default:"0" }}</h3>
+                    <div class="text-success small">
+                        <i class="fas fa-user-plus"></i> New today: {{ new_users_today|default:"0" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Platform Earnings -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="stats-icon bg-light-primary rounded-circle me-3">
+                            <i class="fas fa-dollar-sign text-primary"></i>
+                        </div>
+                        <h6 class="text-muted mb-0">Platform Earnings</h6>
+                    </div>
+                    <h3 class="mb-2">₹{{ total_platform_earnings|default:"0.00" }}</h3>
+                    <div class="text-success small">
+                        <i class="fas fa-chart-line"></i> Today: ₹{{ today_earnings|default:"0.00" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Rides -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="stats-icon bg-light-primary rounded-circle me-3">
+                            <i class="fas fa-car text-primary"></i>
+                        </div>
+                        <h6 class="text-muted mb-0">Active Rides</h6>
+                    </div>
+                    <h3 class="mb-2">{{ active_rides|default:"0" }}</h3>
+                    <div class="text-success small">
+                        <i class="fas fa-clock"></i> Upcoming: {{ upcoming_rides|default:"0" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Platform Rating -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="stats-icon bg-light-primary rounded-circle me-3">
+                            <i class="fas fa-star text-primary"></i>
+                        </div>
+                        <h6 class="text-muted mb-0">Platform Rating</h6>
+                    </div>
+                    <h3 class="mb-2">{{ platform_rating|default:"0.0" }}/5.0</h3>
+                    <div class="text-success small">
+                        <i class="fas fa-thumbs-up"></i> {{ total_reviews|default:"0" }} reviews
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Management Links -->
+    <div class="row g-3 mb-3">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body p-3">
+                    <h5 class="card-title">User Management</h5>
+                    <p class="card-text">Manage users, verify drivers, and monitor user activity.</p>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="me-3">
+                            <span class="badge bg-primary">{{ drivers_count|default:"0" }} Drivers</span>
+                        </div>
+                        <div>
+                            <span class="badge bg-success">{{ passengers_count|default:"0" }} Passengers</span>
+                        </div>
+                    </div>
+                    <a href="{% url 'dashboard:admin-users' %}" class="btn btn-primary">Manage Users</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body p-3">
+                    <h5 class="card-title">Ride Management</h5>
+                    <p class="card-text">Monitor rides, handle cancellations, and view ride statistics.</p>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="me-3">
+                            <span class="badge bg-primary">{{ active_rides|default:"0" }} Active</span>
+                        </div>
+                        <div>
+                            <span class="badge bg-success">{{ completed_rides|default:"0" }} Completed</span>
+                        </div>
+                    </div>
+                    <a href="{% url 'dashboard:admin-rides' %}" class="btn btn-primary">Manage Rides</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Charts -->
+    <div class="row g-3">
+        <!-- User Growth Chart -->
+        <div class="col-12 col-xl-6">
+            <div class="card">
+                <div class="card-body p-3">
+                    <h5 class="card-title mb-3">User Growth</h5>
+                    <div class="chart-actions mb-3">
+                        <button class="btn btn-sm btn-primary active" data-period="week" onclick="updateUserGrowthPeriod('week')">Week</button>
+                        <button class="btn btn-sm btn-outline-primary" data-period="month" onclick="updateUserGrowthPeriod('month')">Month</button>
+                        <button class="btn btn-sm btn-outline-primary" data-period="year" onclick="updateUserGrowthPeriod('year')">Year</button>
+                    </div>
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="userGrowthChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Platform Revenue Chart -->
+        <div class="col-12 col-xl-6">
+            <div class="card">
+                <div class="card-body p-3">
+                    <h5 class="card-title mb-3">Platform Revenue</h5>
+                    <div class="chart-actions mb-3">
+                        <button class="btn btn-sm btn-primary active" data-period="week" onclick="updateRevenuePeriod('week')">Week</button>
+                        <button class="btn btn-sm btn-outline-primary" data-period="month" onclick="updateRevenuePeriod('month')">Month</button>
+                        <button class="btn btn-sm btn-outline-primary" data-period="year" onclick="updateRevenuePeriod('year')">Year</button>
+                    </div>
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Platform Overview Charts -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body p-3">
+                    <h5 class="card-title">Platform Overview</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="chart-container" style="height: 300px;">
+                                <canvas id="rideStatusChart"></canvas>
+                            </div>
+                            <div class="chart-legend mt-3 text-center">
+                                <span class="badge bg-success me-2">Completed</span>
+                                <span class="badge bg-primary me-2">Active</span>
+                                <span class="badge bg-warning me-2">Upcoming</span>
+                                <span class="badge bg-danger">Cancelled</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="chart-container" style="height: 300px;">
+                                <canvas id="userTypeChart"></canvas>
+                            </div>
+                            <div class="chart-legend mt-3 text-center">
+                                <span class="badge bg-primary me-2">Drivers</span>
+                                <span class="badge bg-success">Passengers</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Action Buttons -->
+    <div class="mt-4">
+        <a href="{% url 'admin:index' %}" class="btn btn-primary me-2">
+            <i class="fas fa-cog me-2"></i>ADMIN PANEL
+        </a>
+        <a href="{% url 'users:user-list' %}" class="btn btn-secondary me-2">
+            <i class="fas fa-users me-2"></i>MANAGE USERS
+        </a>
+        <a href="{% url 'rides:all-rides' %}" class="btn btn-secondary">
+            <i class="fas fa-car me-2"></i>ALL RIDES
+        </a>
+    </div>
+
+    {% elif request.user.role == 'driver' %}
+    <!-- Driver Stats -->
+    <div class="row g-3 mb-3">
+        <!-- Total Earnings -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="stats-icon bg-light-primary rounded-circle me-3">
+                            <i class="fas fa-dollar-sign text-primary"></i>
+                        </div>
+                        <h6 class="text-muted mb-0">Total Earnings</h6>
+                    </div>
+                    <h3 class="mb-2">₹{{ total_earnings|default:"0.00" }}</h3>
+                    <div class="text-success small">
+                        <i class="fas fa-arrow-up"></i> Today: ₹{{ today_earnings|default:"0.00" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Rides -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="stats-icon bg-light-primary rounded-circle me-3">
+                            <i class="fas fa-route text-primary"></i>
+                        </div>
+                        <h6 class="text-muted mb-0">Total Rides</h6>
+                    </div>
+                    <h3 class="mb-2">{{ total_rides|default:"0" }}</h3>
+                    <div class="text-success small">
+                        <i class="fas fa-arrow-up"></i> This week: {{ week_rides|default:"0" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Passengers -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="stats-icon bg-light-primary rounded-circle me-3">
+                            <i class="fas fa-users text-primary"></i>
+                        </div>
+                        <h6 class="text-muted mb-0">Total Passengers</h6>
+                    </div>
+                    <h3 class="mb-2">{{ total_passengers|default:"0" }}</h3>
+                    <div class="text-success small">
+                        <i class="fas fa-arrow-up"></i> Today: {{ today_passengers|default:"0" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rating -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="stats-icon bg-light-primary rounded-circle me-3">
+                            <i class="fas fa-star text-primary"></i>
+                        </div>
+                        <h6 class="text-muted mb-0">Average Rating</h6>
+                    </div>
+                    <h3 class="mb-2">{{ rating|default:"0.0" }}/5.0</h3>
+                    <div class="text-success small">
+                        <i class="fas fa-users"></i> {{ total_ratings|default:"0" }} ratings
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Driver Quick Actions -->
+    <div class="row g-3">
+        <!-- Recent Rides -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body p-3">
+                    <h5 class="card-title">Recent Rides</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>From</th>
+                                    <th>To</th>
+                                    <th>Passengers</th>
+                                    <th>Earnings</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ride in recent_rides|slice:":5" %}
+                                <tr>
+                                    <td>{{ ride.ride_date|date:"M d, Y" }}</td>
+                                    <td>{{ ride.start_location }}</td>
+                                    <td>{{ ride.end_location }}</td>
+                                    <td>{{ ride.get_booked_seats }}/{{ ride.available_seats }}</td>
+                                    <td>₹{{ ride.price_per_seat }}</td>
+                                    <td>
+                                        <span class="badge {% if ride.status == 'completed' %}bg-success
+                                                         {% elif ride.status == 'active' %}bg-primary
+                                                         {% elif ride.status == 'upcoming' %}bg-warning
+                                                         {% else %}bg-danger{% endif %}">
+                                            {{ ride.status|title }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center">No recent rides</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vehicle Status -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body p-3">
+                    <h5 class="card-title">Vehicle Status</h5>
+                    {% if user_vehicle %}
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="vehicle-icon me-3">
+                            <i class="fas fa-car fa-2x text-primary"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">{{ user_vehicle.company }} {{ user_vehicle.model }}</h6>
+                            <p class="text-muted mb-0">License: {{ user_vehicle.license_plate }}</p>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <p class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Vehicle Verified</p>
+                        <p class="mb-2"><i class="fas fa-calendar-check text-primary me-2"></i>Documents Valid till: {{ user_vehicle.document_expiry|date:"M d, Y" }}</p>
+                        <p class="mb-0"><i class="fas fa-chair text-info me-2"></i>Available Seats: {{ user_vehicle.seating_capacity }}</p>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{% url 'vehicles:vehicle-update' user_vehicle.pk %}" class="btn btn-sm btn-outline-primary me-2">
+                            <i class="fas fa-edit me-1"></i>Edit
+                        </a>
+                        <a href="{% url 'vehicles:vehicle-detail' user_vehicle.pk %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-info-circle me-1"></i>Details
+                        </a>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-car-alt fa-3x text-muted mb-3"></i>
+                        <p class="mb-3">No vehicle registered yet</p>
+                        <a href="{% url 'vehicles:add_vehicle' %}" class="btn btn-primary">Add Vehicle</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Schedule -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body p-3">
+                    <h5 class="card-title">Upcoming Schedule</h5>
+                    {% if upcoming_rides %}
+                    <div class="schedule-list">
+                        {% for ride in upcoming_rides|slice:":3" %}
+                        <div class="schedule-item p-3 mb-2 bg-light rounded">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ ride.start_location }} → {{ ride.end_location }}</h6>
+                                    <p class="text-muted mb-0"><i class="far fa-clock me-1"></i>{{ ride.ride_date|date:"M d, Y h:i A" }}</p>
+                                </div>
+                                <div class="text-end">
+                                    <p class="mb-1">₹{{ ride.price_per_seat }}/seat</p>
+                                    <small class="text-muted">{{ ride.get_booked_seats }}/{{ ride.available_seats }} booked</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if upcoming_rides.count > 3 %}
+                    <div class="text-center mt-3">
+                        <a href="{% url 'rides:my-rides' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="far fa-calendar-alt fa-3x text-muted mb-3"></i>
+                        <p class="mb-3">No upcoming rides scheduled</p>
+                        <a href="{% url 'rides:ride-create' %}" class="btn btn-primary">Create a Ride</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Driver Action Buttons -->
+    <div class="mt-4">
+        <a href="{% url 'rides:ride-create' %}" class="btn btn-primary me-2">
+            <i class="fas fa-plus me-2"></i>CREATE NEW RIDE
+        </a>
+        <a href="{% url 'rides:my-rides' %}" class="btn btn-secondary me-2">
+            <i class="fas fa-list me-2"></i>VIEW MY RIDES
+        </a>
+        <a href="{% url 'vehicles:vehicle-list' %}" class="btn btn-secondary">
+            <i class="fas fa-car me-2"></i>MANAGE VEHICLES
+        </a>
+    </div>
+
+    {% else %}
+    <!-- Passenger Stats -->
+    <div class="row g-3 mb-3">
+        <!-- Total Trips -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="stats-icon bg-light-primary rounded-circle me-3">
+                            <i class="fas fa-car text-primary"></i>
+                        </div>
+                        <h6 class="text-muted mb-0">Total Trips</h6>
+                    </div>
+                    <h3 class="mb-2">{{ total_trips|default:"0" }}</h3>
+                    <div class="text-success small">
+                        <i class="fas fa-arrow-up"></i> This week: {{ week_trips|default:"0" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Money Saved -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="stats-icon bg-light-primary rounded-circle me-3">
+                            <i class="fas fa-piggy-bank text-primary"></i>
+                        </div>
+                        <h6 class="text-muted mb-0">Money Saved</h6>
+                    </div>
+                    <h3 class="mb-2">₹{{ money_saved|default:"0.00" }}</h3>
+                    <div class="text-success small">
+                        <i class="fas fa-leaf"></i> Eco-friendly savings
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CO2 Reduced -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="stats-icon bg-light-primary rounded-circle me-3">
+                            <i class="fas fa-leaf text-primary"></i>
+                        </div>
+                        <h6 class="text-muted mb-0">CO2 Reduced</h6>
+                    </div>
+                    <h3 class="mb-2">{{ co2_reduced|default:"0" }}kg</h3>
+                    <div class="text-success small">
+                        <i class="fas fa-tree"></i> Environmental impact
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Favorite Routes -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="stats-icon bg-light-primary rounded-circle me-3">
+                            <i class="fas fa-map-marker-alt text-primary"></i>
+                        </div>
+                        <h6 class="text-muted mb-0">Favorite Routes</h6>
+                    </div>
+                    <h3 class="mb-2">{{ favorite_routes|default:"0" }}</h3>
+                    <div class="text-success small">
+                        <i class="fas fa-heart"></i> Most traveled
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Passenger Charts -->
+    <div class="row g-3">
+        <!-- Trip History Chart -->
+        <div class="col-xl-6">
+            <div class="card">
+                <div class="card-body p-3">
+                    <h5 class="card-title mb-3">Trip History</h5>
+                    <div class="chart-actions mb-3">
+                        <button class="btn btn-sm btn-primary active" onclick="updateTripPeriod('week')">Week</button>
+                        <button class="btn btn-sm btn-outline-primary" onclick="updateTripPeriod('month')">Month</button>
+                        <button class="btn btn-sm btn-outline-primary" onclick="updateTripPeriod('year')">Year</button>
+                    </div>
+                    <div style="height: 300px;">
+                        <canvas id="tripHistoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Bookings -->
+        <div class="col-xl-6">
+            <div class="card">
+                <div class="card-body p-3">
+                    <h5 class="card-title">Recent Bookings</h5>
+                    {% if recent_bookings %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>From</th>
+                                    <th>To</th>
+                                    <th>Driver</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for booking in recent_bookings %}
+                                <tr>
+                                    <td>{{ booking.ride.ride_date|date:"M d, Y" }}</td>
+                                    <td>{{ booking.ride.start_location }}</td>
+                                    <td>{{ booking.ride.end_location }}</td>
+                                    <td>{{ booking.ride.driver.get_full_name|default:booking.ride.driver.username }}</td>
+                                    <td>
+                                        <span class="badge {% if booking.status == 'completed' %}bg-success
+                                                         {% elif booking.status == 'active' %}bg-primary
+                                                         {% elif booking.status == 'upcoming' %}bg-warning
+                                                         {% else %}bg-danger{% endif %}">
+                                            {{ booking.status|title }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-calendar-check fa-3x text-muted mb-3"></i>
+                        <p class="mb-3">No bookings yet</p>
+                        <a href="{% url 'rides:ride-search' %}" class="btn btn-primary">Find a Ride</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Passenger Action Buttons -->
+    <div class="mt-4">
+        <a href="{% url 'rides:ride-search' %}" class="btn btn-primary me-2">
+            <i class="fas fa-search me-2"></i>FIND A RIDE
+        </a>
+        <a href="{% url 'rides:my-bookings' %}" class="btn btn-secondary me-2">
+            <i class="fas fa-list me-2"></i>MY BOOKINGS
+        </a>
+        <a href="{% url 'users:profile' %}" class="btn btn-secondary">
+            <i class="fas fa-user me-2"></i>MY PROFILE
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<div id="charts-container">
+    <!-- Existing chart containers -->
+</div>
+
+<script>
+    // Initialize data from Django template context
+    const chartData = {
+        userGrowth: JSON.parse('{{ user_growth_data|default:"[]"|escapejs }}'),
+        revenue: JSON.parse('{{ revenue_data|default:"[]"|escapejs }}'),
+        rides: {
+            completed: parseInt('{{ completed_rides|default:0 }}'),
+            active: parseInt('{{ active_rides|default:0 }}'),
+            upcoming: parseInt('{{ upcoming_rides|default:0 }}'),
+            cancelled: parseInt('{{ cancelled_rides|default:0 }}')
+        },
+        users: {
+            drivers: parseInt('{{ drivers_count|default:0 }}'),
+            passengers: parseInt('{{ passengers_count|default:0 }}')
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Chart.js default configuration
+        Chart.defaults.font.family = "'Poppins', 'Helvetica', 'Arial', sans-serif";
+        Chart.defaults.font.size = 13;
+        Chart.defaults.plugins.legend.display = true;
+        Chart.defaults.plugins.tooltip.enabled = true;
+
+        if (document.getElementById('userGrowthChart')) {
+            // User Growth Chart
+            const userGrowthCtx = document.getElementById('userGrowthChart').getContext('2d');
+            const userGrowthChart = new Chart(userGrowthCtx, {
+            type: 'line',
+            data: {
+                    labels: chartData.userGrowth.map(item => item.date),
+                datasets: [{
+                        label: 'New Users',
+                        data: chartData.userGrowth.map(item => item.count),
+                        borderColor: '#4361ee',
+                        backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        if (document.getElementById('revenueChart')) {
+            // Revenue Chart
+            const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+            const revenueChart = new Chart(revenueCtx, {
+                type: 'bar',
+                data: {
+                    labels: chartData.revenue.map(item => item.date),
+                    datasets: [{
+                        label: 'Revenue (₹)',
+                        data: chartData.revenue.map(item => item.amount),
+                        backgroundColor: '#4361ee',
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                    return '₹' + context.raw.toFixed(2);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                    return '₹' + value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+        if (document.getElementById('rideStatusChart')) {
+            // Ride Status Chart
+            const rideStatusCtx = document.getElementById('rideStatusChart').getContext('2d');
+            const rideStatusChart = new Chart(rideStatusCtx, {
+                type: 'doughnut',
+            data: {
+                    labels: ['Completed', 'Active', 'Upcoming', 'Cancelled'],
+                    datasets: [{
+                        data: [
+                            chartData.rides.completed,
+                            chartData.rides.active,
+                            chartData.rides.upcoming,
+                            chartData.rides.cancelled
+                        ],
+                        backgroundColor: ['#28a745', '#4361ee', '#ffc107', '#dc3545']
+                    }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+
+        if (document.getElementById('userTypeChart')) {
+            // User Type Chart
+            const userTypeCtx = document.getElementById('userTypeChart').getContext('2d');
+            const userTypeChart = new Chart(userTypeCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Drivers', 'Passengers'],
+                    datasets: [{
+                        data: [chartData.users.drivers, chartData.users.passengers],
+                        backgroundColor: ['#4361ee', '#28a745']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,663 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}EcoCarpool{% endblock %}</title>
+    <link rel="icon" type="image/x-icon" href="{% static 'images/common/favicon.ico' %}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #4169E1;  /* Royal Blue */
+            --primary-dark: #1E40AF;   /* Darker Blue */
+            --secondary-color: #6366f1; /* Indigo */
+            --success-color: #10B981;  /* Emerald */
+            --info-color: #60A5FA;    /* Light Blue */
+            --warning-color: #F59E0B;  /* Amber */
+            --danger-color: #EF4444;   /* Red */
+            --light-color: #F3F4F6;    /* Gray 100 */
+            --dark-color: #1F2937;     /* Gray 800 */
+            --text-color: #374151;     /* Gray 700 */
+            --border-color: #E5E7EB;   /* Gray 200 */
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f9fc;
+            color: var(--text-color);
+            overflow-x: hidden;
+        }
+
+        .wrapper {
+            display: flex;
+            width: 100%;
+            align-items: stretch;
+        }
+
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: white;
+            width: 250px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            border-right: none;
+            overflow-y: auto;
+            max-height: 100vh;
+            box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar.collapsed {
+            margin-left: -250px;
+        }
+
+        .sidebar-brand {
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand a {
+            display: block;
+            text-decoration: none;
+        }
+
+        .carpool-image {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: 3px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-divider {
+            display: none;
+        }
+
+        .sidebar-nav {
+            padding: 1rem 0;
+            overflow-y: auto;
+        }
+
+        .sidebar-heading {
+            padding: 0.75rem 1rem 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.7);
+            letter-spacing: 0.05em;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border-radius: 0.5rem;
+            margin: 0 0.5rem;
+        }
+
+        .sidebar-item i {
+            width: 1.25rem;
+            margin-right: 0.75rem;
+            text-align: center;
+        }
+
+        .sidebar-item:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.15);
+            text-decoration: none;
+        }
+
+        .sidebar-item.active {
+            color: white;
+            background: rgba(255, 255, 255, 0.2);
+            font-weight: 600;
+        }
+
+        .main-content {
+            width: calc(100% - 250px);
+            margin-left: 250px;
+            transition: all 0.3s ease;
+            min-height: 100vh;
+            background-color: #f8f9fc;
+            padding: 1.5rem;
+        }
+
+        .main-content.expanded {
+            width: 100%;
+            margin-left: 0;
+        }
+
+        .navbar {
+            background: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+            padding: 1rem 1.5rem;
+            margin-bottom: 2rem;
+            border-radius: 0.5rem;
+        }
+
+        .navbar-brand {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .nav-link {
+            color: var(--dark-color);
+            font-weight: 500;
+        }
+
+        .dropdown-menu {
+            border: none;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+            border-radius: 0.5rem;
+            padding: 0.5rem 0;
+        }
+
+        .dropdown-item {
+            padding: 0.75rem 1.25rem;
+            color: var(--text-color);
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .dropdown-item:hover {
+            background-color: var(--light-color);
+            color: var(--primary-color);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            border-radius: 1rem;
+            background-color: var(--danger-color);
+            color: white;
+            border: 2px solid white;
+        }
+
+        .loading-spinner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+            color: var(--primary-color);
+        }
+
+        .btn-primary {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            color: white;
+            padding: 0.625rem 1.25rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: white;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 0.625rem 1.25rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--light-color);
+            border-color: var(--border-color);
+            transform: translateY(-1px);
+        }
+
+        .card {
+            background: white;
+            border: none;
+            border-radius: 1rem;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+            transition: transform 0.2s ease;
+            margin-bottom: 1.5rem;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                margin-left: -250px;
+            }
+
+            .sidebar.show {
+                margin-left: 0;
+            }
+
+            .main-content {
+                width: 100%;
+                margin-left: 0;
+            }
+        }
+
+        /* Logo Styling */
+        .sidebar-logo {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            margin-bottom: 1rem;
+        }
+
+        .logo-container {
+            width: 100%;
+            height: 150px;
+            overflow: hidden;
+            border-radius: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            background: white;
+        }
+
+        .logo-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            padding: 0;
+        }
+
+        .logo-text {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Update hamburger menu button */
+        #sidebarCollapse {
+            padding: 10px;
+            background: transparent;
+            border: none;
+            position: relative;
+            z-index: 1001;
+            text-decoration: none !important;
+        }
+
+        #sidebarCollapse:focus {
+            outline: none !important;
+            box-shadow: none !important;
+            text-decoration: none !important;
+        }
+
+        #sidebarCollapse i {
+            font-size: 24px;
+            color: #4169E1;
+            transition: all 0.3s ease;
+        }
+
+        #sidebarCollapse:hover i {
+            color: #1E40AF;
+        }
+
+        /* Hide scrollbar but keep functionality */
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Update navbar styling */
+        .navbar {
+            background: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 0.75rem 1.5rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        /* Update logo container back to original size */
+        .logo-container {
+            width: 100%;
+            height: 150px;
+            overflow: hidden;
+            border-radius: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            background: white;
+        }
+
+        .logo-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            padding: 0;
+        }
+
+        /* Update sidebar nav section for better scrolling */
+        .sidebar-nav {
+            padding: 1rem 0;
+            overflow-y: auto;
+        }
+
+        /* Ensure content doesn't get hidden under the navbar */
+        .main-content {
+            padding-top: 0;
+        }
+
+        .container-fluid {
+            padding-top: 1rem;
+        }
+
+        .btn-link {
+            text-decoration: none !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0.5rem;
+        }
+
+        .btn-link:focus {
+            text-decoration: none !important;
+            box-shadow: none !important;
+            outline: none !important;
+        }
+
+        /* Navbar and Dropdown Styles */
+        .avatar-circle {
+            width: 40px;
+            height: 40px;
+            background-color: var(--light-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .avatar-circle i {
+            color: #4B5563;
+            font-size: 16px;
+        }
+
+        .dropdown-toggle {
+            background: transparent;
+            border: none;
+            padding: 0.5rem;
+            color: #374151;
+        }
+
+        .dropdown-toggle:hover, .dropdown-toggle:focus {
+            background: rgba(0, 0, 0, 0.05);
+            color: #1F2937;
+        }
+
+        .dropdown-toggle::after {
+            margin-left: 0.5rem;
+        }
+
+        .dropdown-menu {
+            padding: 0.5rem 0;
+            border: none;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-radius: 0.5rem;
+            min-width: 200px;
+        }
+
+        .dropdown-item {
+            padding: 0.75rem 1rem;
+            color: #4B5563;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .dropdown-item i {
+            width: 16px;
+            text-align: center;
+        }
+
+        .dropdown-item:hover {
+            background-color: #F3F4F6;
+            color: #1F2937;
+        }
+
+        .dropdown-item.text-danger {
+            color: #DC2626;
+        }
+
+        .dropdown-item.text-danger:hover {
+            background-color: #FEE2E2;
+            color: #DC2626;
+        }
+
+        .dropdown-divider {
+            margin: 0.5rem 0;
+            border-top-color: #E5E7EB;
+        }
+
+        /* Ensure the dropdown appears above other elements */
+        .dropdown-menu.show {
+            z-index: 1050;
+        }
+
+        /* Add styles for the logout option */
+        .sidebar-item.text-danger {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .sidebar-item.text-danger:hover {
+            background-color: rgba(220, 38, 38, 0.2);
+            color: white;
+        }
+
+        .sidebar-divider {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-left: 1rem;
+            margin-right: 1rem;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+    <!-- CSS Dependencies -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@2.6.0/dist/full.css" rel="stylesheet">
+    <link href="{% static 'css/custom.css' %}" rel="stylesheet">
+</head>
+<body class="bg-gray-100 dark:bg-gray-900">
+    {% if request.resolver_match.url_name == 'login' or request.resolver_match.url_name == 'register' %}
+        {% block auth_content %}{% endblock %}
+    {% else %}
+    <div class="wrapper">
+        {% if user.is_authenticated %}
+            {% include 'includes/sidebar.html' %}
+        {% endif %}
+        
+        <div class="main-content {% if not user.is_authenticated %}expanded{% endif %}">
+            {% if user.is_authenticated %}
+                {% include 'includes/navbar.html' %}
+            {% endif %}
+
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            
+                {% block content %}{% endblock %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Loading Spinner -->
+    <div class="loading-spinner" id="loadingSpinner">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <!-- Notifications Modal -->
+    <div class="modal fade" id="notificationsModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Notifications</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="list-group">
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">New Ride Request</h6>
+                                <small>3 mins ago</small>
+                            </div>
+                            <p class="mb-1">Someone wants to book your ride to New York</p>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">Ride Confirmed</h6>
+                                <small>1 hour ago</small>
+                            </div>
+                            <p class="mb-1">Your ride to Boston has been confirmed</p>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Panel -->
+    <div id="notification-panel" class="hidden fixed right-4 top-20 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl">
+        <div class="p-4">
+            <h3 class="text-lg font-semibold mb-2">Notifications</h3>
+            <div id="notification-list" class="space-y-2">
+                <!-- Notifications will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div id="export-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-96">
+            <h3 class="text-lg font-semibold mb-4">Export Report</h3>
+            <form id="export-form">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2">Date Range</label>
+                    <input type="date" name="start_date" class="form-input w-full mb-2">
+                    <input type="date" name="end_date" class="form-input w-full">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2">Format</label>
+                    <select name="format" class="form-select w-full">
+                        <option value="pdf">PDF</option>
+                        <option value="excel">Excel</option>
+                        <option value="csv">CSV</option>
+                    </select>
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button type="button" onclick="closeExportModal()" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Export</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Sidebar toggle
+            const sidebarCollapse = document.getElementById('sidebarCollapse');
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+
+            if (sidebarCollapse) {
+                sidebarCollapse.addEventListener('click', function() {
+                    sidebar.classList.toggle('collapsed');
+                    mainContent.classList.toggle('expanded');
+                });
+            }
+
+            // Handle responsive behavior
+            function checkWidth() {
+                if (window.innerWidth <= 768) {
+                    sidebar?.classList.add('collapsed');
+                    mainContent?.classList.add('expanded');
+                } else {
+                    sidebar?.classList.remove('collapsed');
+                    mainContent?.classList.remove('expanded');
+                }
+            }
+
+            // Check on load
+            checkWidth();
+
+            // Check on resize
+            window.addEventListener('resize', checkWidth);
+
+            // Show loading spinner on form submissions
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                form.addEventListener('submit', function() {
+                    document.querySelector('.loading-spinner').style.display = 'flex';
+                });
+            });
+
+            // Hide loading spinner when page is loaded
+            window.addEventListener('load', function() {
+                document.querySelector('.loading-spinner').style.display = 'none';
+            });
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+    <script src="{% static 'js/theme.js' %}"></script>
+    <script src="{% static 'js/notifications.js' %}"></script>
+    <script src="{% static 'js/charts.js' %}"></script>
+    <script src="{% static 'js/export.js' %}"></script>
+</body>
+</html> 

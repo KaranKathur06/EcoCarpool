@@ -1,0 +1,313 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}User Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">User Management</h1>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <!-- Card Header -->
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Users List</h6>
+                    <div class="d-flex">
+                        <!-- Search Form -->
+                        <form method="get" class="d-none d-sm-inline-block form-inline mr-3">
+                            <div class="input-group">
+                                <input type="text" name="search" class="form-control" 
+                                       placeholder="Search users..." value="{{ request.GET.search }}">
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="fas fa-search fa-sm"></i>
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <!-- Role Filter -->
+                        <div class="dropdown">
+                            <button class="btn btn-secondary dropdown-toggle" type="button" 
+                                    id="roleFilterDropdown" data-bs-toggle="dropdown">
+                                {% if request.GET.role %}
+                                    {{ request.GET.role|title }}s
+                                {% else %}
+                                    All Roles
+                                {% endif %}
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="?{% if request.GET.search %}search={{ request.GET.search }}{% endif %}">
+                                        All Roles
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="?role=driver{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                                        Drivers
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="?role=passenger{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                                        Passengers
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Card Body -->
+                <div class="card-body">
+                    {% if users %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Username</th>
+                                        <th>Email</th>
+                                        <th>Role</th>
+                                        <th>Status</th>
+                                        <th>Joined</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user in users %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    {% if user.profile_picture %}
+                                                        <img src="{{ user.profile_picture.url }}" 
+                                                             class="rounded-circle mr-2" 
+                                                             style="width: 32px; height: 32px; object-fit: cover;">
+                                                    {% else %}
+                                                        <img src="{% static 'images/default-profile.png' %}" 
+                                                             class="rounded-circle mr-2" 
+                                                             style="width: 32px; height: 32px; object-fit: cover;">
+                                                    {% endif %}
+                                                    {{ user.get_full_name }}
+                                                </div>
+                                            </td>
+                                            <td>{{ user.username }}</td>
+                                            <td>{{ user.email }}</td>
+                                            <td>
+                                                <span class="badge bg-{% if user.is_driver %}success{% else %}info{% endif %}">
+                                                    {{ user.get_role_display_name }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                {% if user.is_active %}
+                                                    <span class="badge bg-success">Active</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">Inactive</span>
+                                                {% endif %}
+                                                {% if user.is_verified %}
+                                                    <span class="badge bg-primary">
+                                                        <i class="fas fa-check-circle"></i>
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ user.registration_date|date:"M d, Y" }}</td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button type="button" class="btn btn-sm btn-primary dropdown-toggle" 
+                                                            data-bs-toggle="dropdown">
+                                                        Actions
+                                                    </button>
+                                                    <ul class="dropdown-menu">
+                                                        <li>
+                                                            <a class="dropdown-item" href="#" 
+                                                               onclick="viewUserDetails('{{ user.pk }}')">
+                                                                <i class="fas fa-eye"></i> View Details
+                                                            </a>
+                                                        </li>
+                                                        {% if user.is_active %}
+                                                            <li>
+                                                                <a class="dropdown-item text-danger" href="#"
+                                                                   onclick="deactivateUser('{{ user.pk }}')">
+                                                                    <i class="fas fa-user-times"></i> Deactivate
+                                                                </a>
+                                                            </li>
+                                                        {% else %}
+                                                            <li>
+                                                                <a class="dropdown-item text-success" href="#"
+                                                                   onclick="activateUser('{{ user.pk }}')">
+                                                                    <i class="fas fa-user-check"></i> Activate
+                                                                </a>
+                                                            </li>
+                                                        {% endif %}
+                                                    </ul>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Pagination -->
+                        {% if is_paginated %}
+                            <nav aria-label="Page navigation" class="mt-4">
+                                <ul class="pagination justify-content-center">
+                                    {% if page_obj.has_previous %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}
+                                                {% if request.GET.search %}&search={{ request.GET.search }}{% endif %}
+                                                {% if request.GET.role %}&role={{ request.GET.role }}{% endif %}">
+                                                <i class="fas fa-chevron-left"></i>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+
+                                    {% for num in page_obj.paginator.page_range %}
+                                        {% if page_obj.number == num %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ num }}</span>
+                                            </li>
+                                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ num }}
+                                                    {% if request.GET.search %}&search={{ request.GET.search }}{% endif %}
+                                                    {% if request.GET.role %}&role={{ request.GET.role }}{% endif %}">
+                                                    {{ num }}
+                                                </a>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+
+                                    {% if page_obj.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ page_obj.next_page_number }}
+                                                {% if request.GET.search %}&search={{ request.GET.search }}{% endif %}
+                                                {% if request.GET.role %}&role={{ request.GET.role }}{% endif %}">
+                                                <i class="fas fa-chevron-right"></i>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-users fa-3x text-gray-300 mb-3"></i>
+                            <p class="text-gray-500">No users found matching your criteria.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- User Details Modal -->
+<div class="modal fade" id="userDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">User Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Content will be loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function viewUserDetails(userId) {
+        const modal = document.getElementById('userDetailsModal');
+        const modalBody = modal.querySelector('.modal-body');
+        
+        // Load user details via AJAX
+        fetch(`/users/api/users/${userId}/`)
+            .then(response => response.json())
+            .then(data => {
+                modalBody.innerHTML = `
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            <img src="${data.profile_picture || '{% static "images/default-profile.png" %}'}" 
+                                 class="rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+                        </div>
+                        <div class="col-md-8">
+                            <h4>${data.full_name}</h4>
+                            <p class="text-muted">${data.email}</p>
+                            <hr>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Username:</strong> ${data.username}</p>
+                                    <p><strong>Role:</strong> ${data.role}</p>
+                                    <p><strong>Phone:</strong> ${data.phone_number}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Joined:</strong> ${new Date(data.registration_date).toLocaleDateString()}</p>
+                                    <p><strong>Status:</strong> ${data.is_active ? 'Active' : 'Inactive'}</p>
+                                    <p><strong>Verified:</strong> ${data.is_verified ? 'Yes' : 'No'}</p>
+                                </div>
+                            </div>
+                            ${data.bio ? `<hr><p><strong>Bio:</strong> ${data.bio}</p>` : ''}
+                            ${data.address ? `<p><strong>Address:</strong> ${data.address}</p>` : ''}
+                        </div>
+                    </div>
+                `;
+                
+                const bsModal = new bootstrap.Modal(modal);
+                bsModal.show();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error loading user details');
+            });
+    }
+    
+    function deactivateUser(userId) {
+        if (confirm('Are you sure you want to deactivate this user?')) {
+            fetch(`/users/api/users/${userId}/deactivate/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    throw new Error('Failed to deactivate user');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error deactivating user');
+            });
+        }
+    }
+    
+    function activateUser(userId) {
+        if (confirm('Are you sure you want to activate this user?')) {
+            fetch(`/users/api/users/${userId}/activate/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    throw new Error('Failed to activate user');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error activating user');
+            });
+        }
+    }
+</script>
+{% endblock %} 

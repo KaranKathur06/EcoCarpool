@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Payment History{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Payment History</h2>
+
+    {% if error %}
+    <div class="alert alert-danger">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Total Payments</h5>
+                    <p class="card-text h3">₹{{ total_payments|floatformat:2 }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Total Payouts</h5>
+                    <p class="card-text h3">₹{{ total_payouts|floatformat:2 }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Total Tips</h5>
+                    <p class="card-text h3">₹{{ total_tips|floatformat:2 }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment History -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Payment History</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in user_payments %}
+                        <tr>
+                            <td>{{ payment.created_at|date:"M d, Y" }}</td>
+                            <td>{{ payment.payment.description }}</td>
+                            <td>₹{{ payment.amount|floatformat:2 }}</td>
+                            <td>
+                                <span class="badge {% if payment.status == 'completed' %}bg-success{% elif payment.status == 'pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                                    {{ payment.status|title }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center">No payment history found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ride Payouts -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Ride Payouts</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Ride</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payout in ride_payouts %}
+                        <tr>
+                            <td>{{ payout.created_at|date:"M d, Y" }}</td>
+                            <td>{{ payout.ride.route }}</td>
+                            <td>₹{{ payout.amount|floatformat:2 }}</td>
+                            <td>
+                                <span class="badge {% if payout.status == 'completed' %}bg-success{% elif payout.status == 'pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                                    {{ payout.status|title }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center">No ride payouts found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tips -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Tips Received</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Ride</th>
+                            <th>From</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tip in tips %}
+                        <tr>
+                            <td>{{ tip.created_at|date:"M d, Y" }}</td>
+                            <td>{{ tip.ride.route }}</td>
+                            <td>{{ tip.passenger.get_full_name }}</td>
+                            <td>₹{{ tip.amount|floatformat:2 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center">No tips received yet</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

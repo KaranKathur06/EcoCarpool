@@ -1,0 +1,281 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Ride Management</h2>
+        <div class="d-flex gap-2">
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="Search rides..." id="rideSearch">
+                <button class="btn btn-outline-secondary" type="button" id="searchBtn">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+            <select class="form-select" id="statusFilter">
+                <option value="">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="active">Active</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+            </select>
+            <select class="form-select" id="dateFilter">
+                <option value="">All Time</option>
+                <option value="today">Today</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">Total Rides</h6>
+                    <h2 class="mb-0">{{ total_rides }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">Active Rides</h6>
+                    <h2 class="mb-0">{{ active_rides }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">Completed Rides</h6>
+                    <h2 class="mb-0">{{ completed_rides }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">Average Rating</h6>
+                    <h2 class="mb-0">{{ avg_ride_rating|floatformat:1 }}/5.0</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Popular Routes -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Popular Routes</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>From</th>
+                            <th>To</th>
+                            <th>Total Rides</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for route in popular_routes %}
+                        <tr>
+                            <td>{{ route.start_location }}</td>
+                            <td>{{ route.end_location }}</td>
+                            <td>{{ route.count }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center">No routes found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rides Table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Driver</th>
+                            <th>Route</th>
+                            <th>Date</th>
+                            <th>Seats</th>
+                            <th>Price</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ride in rides %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ ride.driver.profile_picture.url|default:'https://via.placeholder.com/40' }}" 
+                                         class="rounded-circle me-2" 
+                                         width="40" 
+                                         height="40"
+                                         alt="{{ ride.driver.get_full_name }}">
+                                    <div>
+                                        <h6 class="mb-0">{{ ride.driver.get_full_name|default:ride.driver.username }}</h6>
+                                        <small class="text-muted">@{{ ride.driver.username }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <strong>From:</strong> {{ ride.start_location }}<br>
+                                    <strong>To:</strong> {{ ride.end_location }}
+                                </div>
+                            </td>
+                            <td>{{ ride.ride_date|date:"M d, Y H:i" }}</td>
+                            <td>{{ ride.get_booked_seats }}/{{ ride.available_seats }}</td>
+                            <td>₹{{ ride.price_per_seat }}</td>
+                            <td>
+                                <span class="badge 
+                                    {% if ride.status == 'completed' %}bg-success
+                                    {% elif ride.status == 'cancelled' %}bg-danger
+                                    {% elif ride.status == 'active' %}bg-primary
+                                    {% else %}bg-warning{% endif %}">
+                                    {{ ride.status|title }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{% url 'rides:ride-detail' ride.id %}" 
+                                       class="btn btn-sm btn-info">
+                                        View
+                                    </a>
+                                    {% if ride.status == 'pending' or ride.status == 'active' %}
+                                    <button type="button" 
+                                            class="btn btn-sm btn-danger ride-action"
+                                            data-ride-id="{{ ride.id }}"
+                                            data-action="cancel">
+                                        Cancel
+                                    </button>
+                                    {% endif %}
+                                    {% if ride.status == 'active' %}
+                                    <button type="button" 
+                                            class="btn btn-sm btn-success ride-action"
+                                            data-ride-id="{{ ride.id }}"
+                                            data-action="complete">
+                                        Complete
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center">No rides found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if is_paginated %}
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                    <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle ride search
+    const searchBtn = document.getElementById('searchBtn');
+    const rideSearch = document.getElementById('rideSearch');
+    const statusFilter = document.getElementById('statusFilter');
+    const dateFilter = document.getElementById('dateFilter');
+
+    function updateSearch() {
+        const searchParams = new URLSearchParams(window.location.search);
+        if (rideSearch.value) searchParams.set('q', rideSearch.value);
+        if (statusFilter.value) searchParams.set('status', statusFilter.value);
+        if (dateFilter.value) searchParams.set('date', dateFilter.value);
+        window.location.search = searchParams.toString();
+    }
+
+    searchBtn.addEventListener('click', updateSearch);
+    rideSearch.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') updateSearch();
+    });
+    statusFilter.addEventListener('change', updateSearch);
+    dateFilter.addEventListener('change', updateSearch);
+
+    // Handle ride actions
+    document.querySelectorAll('.ride-action').forEach(button => {
+        button.addEventListener('click', async function() {
+            const rideId = this.dataset.rideId;
+            const action = this.dataset.action;
+            if (!confirm(`Are you sure you want to ${action} this ride?`)) return;
+
+            try {
+                const response = await fetch(`/admin/rides/${rideId}/action/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: `action=${action}`
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert(data.error || 'An error occurred');
+                }
+            } catch (error) {
+                alert('An error occurred');
+            }
+        });
+    });
+
+    // CSRF token helper
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+});
+</script>
+{% endblock %}
+{% endblock %} 

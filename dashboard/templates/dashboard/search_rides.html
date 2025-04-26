@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Search Rides - EcoCarpool{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-2 text-gray-800">Find Your Ride</h1>
+            <p class="mb-0 text-gray-600">Search for available rides and book your journey</p>
+        </div>
+    </div>
+
+    <!-- Search Form Card -->
+    <div class="card shadow mb-4">
+        <div class="card-body p-4">
+            <form method="get" class="row g-3">
+                <!-- From Location -->
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label class="form-label text-gray-600">
+                            <i class="fas fa-map-marker-alt text-primary me-2"></i>From
+                        </label>
+                        <input type="text" name="start_location" class="form-control bg-light border-0" 
+                               placeholder="Enter departure location" value="{{ request.GET.start_location }}">
+                    </div>
+                </div>
+
+                <!-- To Location -->
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label class="form-label text-gray-600">
+                            <i class="fas fa-map-marker-alt text-primary me-2"></i>To
+                        </label>
+                        <input type="text" name="end_location" class="form-control bg-light border-0" 
+                               placeholder="Enter destination" value="{{ request.GET.end_location }}">
+                    </div>
+                </div>
+
+                <!-- Date -->
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label class="form-label text-gray-600">
+                            <i class="fas fa-calendar text-primary me-2"></i>Date
+                        </label>
+                        <input type="date" name="date" class="form-control bg-light border-0" 
+                               value="{{ request.GET.date }}">
+                    </div>
+                </div>
+
+                <!-- Search Button -->
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Results Card -->
+    <div class="card shadow">
+        <div class="card-header py-3 bg-white">
+            <h6 class="m-0 font-weight-bold text-primary">Available Rides</h6>
+        </div>
+        <div class="card-body">
+            {% if rides %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>Date & Time</th>
+                                <th>From</th>
+                                <th>To</th>
+                                <th>Driver</th>
+                                <th>Available Seats</th>
+                                <th>Price</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ride in rides %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <span class="fw-bold">{{ ride.ride_date|date:"M d, Y" }}</span>
+                                        <small class="text-muted">{{ ride.ride_date|time:"g:i A" }}</small>
+                                    </div>
+                                </td>
+                                <td>{{ ride.start_location }}</td>
+                                <td>{{ ride.end_location }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        {% if ride.driver.profile_picture %}
+                                            <img src="{{ ride.driver.profile_picture.url }}" class="rounded-circle me-2" width="32" height="32">
+                                        {% else %}
+                                            <i class="fas fa-user-circle fa-2x me-2 text-gray-300"></i>
+                                        {% endif %}
+                                        {{ ride.driver.get_full_name }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success">{{ ride.available_seats }} seats</span>
+                                </td>
+                                <td>
+                                    <span class="fw-bold text-primary">₹{{ ride.price_per_seat }}</span>
+                                </td>
+                                <td>
+                                    <a href="{% url 'rides:ride-detail' ride.id %}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-info-circle me-1"></i>View Details
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-car-side fa-3x text-gray-300 mb-3"></i>
+                    <h5 class="text-gray-800 mb-2">No Rides Found</h5>
+                    <p class="text-gray-600">No rides match your search criteria. Try adjusting your search parameters.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-control {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+        border-radius: 0.5rem;
+        box-shadow: none !important;
+    }
+
+    .form-control:focus {
+        border-color: #4e73df;
+    }
+
+    .btn-primary {
+        background-color: #4e73df;
+        border-color: #4e73df;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+    }
+
+    .btn-primary:hover {
+        background-color: #2e59d9;
+        border-color: #2e59d9;
+    }
+
+    .table {
+        font-size: 0.9rem;
+    }
+
+    .table th {
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.75rem;
+    }
+
+    .badge {
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+    }
+
+    .card {
+        border: none;
+        border-radius: 0.75rem;
+    }
+
+    .card-header {
+        background-color: transparent;
+        border-bottom: 1px solid #e3e6f0;
+    }
+
+    .text-primary {
+        color: #4e73df !important;
+    }
+
+    .text-gray-300 {
+        color: #dddfeb !important;
+    }
+
+    .text-gray-600 {
+        color: #858796 !important;
+    }
+
+    .text-gray-800 {
+        color: #5a5c69 !important;
+    }
+
+    .bg-light {
+        background-color: #f8f9fc !important;
+    }
+</style>
+{% endblock %} 

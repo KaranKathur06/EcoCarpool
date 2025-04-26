@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>All Rides</h2>
+    
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Driver</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Date</th>
+                    <th>Seats</th>
+                    <th>Price/Seat</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ride in rides %}
+                <tr>
+                    <td>{{ ride.driver.get_full_name|default:ride.driver.username }}</td>
+                    <td>{{ ride.start_location }}</td>
+                    <td>{{ ride.end_location }}</td>
+                    <td>{{ ride.ride_date|date:"M d, Y H:i" }}</td>
+                    <td>{{ ride.available_seats }}/{{ ride.get_booked_seats }}</td>
+                    <td>₹{{ ride.price_per_seat }}</td>
+                    <td>
+                        <span class="badge {% if ride.status == 'completed' %}bg-success{% elif ride.status == 'cancelled' %}bg-danger{% else %}bg-primary{% endif %}">
+                            {{ ride.status|title }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{% url 'rides:ride-detail' ride.pk %}" class="btn btn-sm btn-info">View</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center">No rides found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if is_paginated %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+            </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+            <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+            </li>
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %} 

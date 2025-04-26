@@ -1,0 +1,497 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}My Profile - EcoCarpool{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-color: #1e88e5;
+        --secondary-color: #0d47a1;
+        --success-color: #1cc88a;
+        --info-color: #36b9cc;
+        --warning-color: #ffc107;
+        --danger-color: #e74a3b;
+        --light-color: #bbdefb;
+        --dark-color: #5a5c69;
+        --text-color: #333;
+        --background-color: #f8f9fa;
+    }
+
+    .profile-hero {
+        background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+        min-height: 300px;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: -100px;
+    }
+
+    .profile-hero::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 400px;
+        height: 400px;
+        background: url('{% static "images/logo.png" %}') no-repeat center center;
+        background-size: contain;
+        opacity: 0.1;
+        filter: brightness(2);
+    }
+
+    .profile-hero-image {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.15;
+        mix-blend-mode: overlay;
+    }
+
+    .profile-hero::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('{% static "images/pattern.png" %}') repeat;
+        opacity: 0.05;
+        z-index: 1;
+    }
+
+    .profile-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 2rem;
+        position: relative;
+    }
+
+    .profile-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 0 20px rgba(30, 136, 229, 0.1);
+        padding: 2rem;
+        margin-top: -100px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .profile-header {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .profile-picture-wrapper {
+        position: relative;
+    }
+
+    .profile-picture {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid white;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .profile-badge {
+        background: var(--primary-color);
+        color: white;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        border: 2px solid white;
+    }
+
+    .profile-info h1 {
+        font-size: 2rem;
+        margin: 0;
+        color: var(--dark-color);
+    }
+
+    .profile-role {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        background: var(--light-color);
+        color: var(--primary-color);
+        border-radius: 20px;
+        font-weight: 500;
+        margin-top: 0.5rem;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin: 2rem 0;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        border: 1px solid var(--light-color);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(30, 136, 229, 0.2);
+    }
+
+    .stat-value {
+        color: var(--primary-color);
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        color: var(--secondary-color);
+        margin-top: 0.5rem;
+    }
+
+    .contact-section {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        margin-top: 2rem;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .contact-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+    }
+
+    .contact-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .contact-icon {
+        background: var(--light-color);
+        color: var(--primary-color);
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+
+    .contact-item:hover .contact-icon {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .contact-details h3 {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--secondary-color);
+    }
+
+    .contact-details p {
+        margin: 0.25rem 0 0;
+        color: var(--dark-color);
+        font-weight: 500;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    .btn-action {
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-edit {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .btn-edit:hover {
+        background: var(--secondary-color);
+        color: white;
+    }
+
+    .btn-password {
+        background: var(--light-color);
+        color: var(--primary-color);
+    }
+
+    .btn-password:hover {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .recent-activity {
+        margin-top: 2rem;
+    }
+
+    .activity-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .activity-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .activity-table th {
+        background: var(--light-color);
+        padding: 1rem;
+        font-weight: 500;
+        text-align: left;
+        color: var(--secondary-color);
+    }
+
+    .activity-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .status-badge {
+        padding: 0.35rem 1rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .status-completed {
+        background: var(--light-color);
+        color: var(--secondary-color);
+    }
+
+    .status-pending {
+        background: #fff3e0;
+        color: #f57c00;
+    }
+
+    .status-cancelled {
+        background: #ffebee;
+        color: #c62828;
+    }
+
+    .rating-stars {
+        color: var(--warning-color);
+        font-size: 1.25rem;
+    }
+
+    @media (max-width: 768px) {
+        .profile-header {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .contact-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-hero">
+    <img src="{% static 'images/logo.png' %}" style="display: none;" alt="Logo">
+    {% if user.profile_picture %}
+        <img src="{{ user.profile_picture.url }}" class="profile-hero-image" alt="Profile Background">
+    {% else %}
+        <img src="{% static 'images/default-profile.jpg' %}" class="profile-hero-image" alt="Default Profile Background">
+    {% endif %}
+</div>
+
+<div class="profile-container">
+    <div class="profile-card">
+        <div class="profile-header">
+            <div class="profile-picture-wrapper">
+                {% if user.profile_picture %}
+                    <img src="{{ user.profile_picture.url }}" alt="Profile Picture" class="profile-picture">
+                {% else %}
+                    <div class="profile-picture" style="background: #e9ecef; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-user fa-3x" style="color: #858796;"></i>
+                    </div>
+                {% endif %}
+                {% if user.is_verified %}
+                    <div class="profile-badge">
+                        <i class="fas fa-check"></i>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="profile-info">
+                <h1>{{ user.get_full_name }}</h1>
+                <span class="profile-role">
+                    <i class="fas {% if user.is_driver %}fa-car{% else %}fa-user{% endif %} mr-2"></i>
+                    {{ user.get_role_display_name }}
+                </span>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <p class="stat-value">{{ user.get_total_rides }}</p>
+                <p class="stat-label">Total Rides</p>
+            </div>
+            <div class="stat-card">
+                <p class="stat-value">{{ user.get_rating|floatformat:1 }}</p>
+                <div class="rating-stars">
+                    {% for i in "12345"|make_list %}
+                        {% if forloop.counter <= user.get_rating %}
+                            <i class="fas fa-star"></i>
+                        {% else %}
+                            <i class="far fa-star"></i>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <p class="stat-label">Rating</p>
+            </div>
+            {% if user.is_driver %}
+            <div class="stat-card">
+                <p class="stat-value">₹{{ user.get_total_earnings|floatformat:0|intcomma }}</p>
+                <p class="stat-label">Total Earnings</p>
+            </div>
+            {% endif %}
+            <div class="stat-card">
+                <p class="stat-value">{{ user.registration_date|date:"M Y" }}</p>
+                <p class="stat-label">Member Since</p>
+            </div>
+        </div>
+
+        <div class="contact-section">
+            <h2 class="mb-4">Contact Information</h2>
+            <div class="contact-grid">
+                <div class="contact-item">
+                    <div class="contact-icon">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <div class="contact-details">
+                        <h3>Email</h3>
+                        <p>{{ user.email }}</p>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-icon">
+                        <i class="fas fa-phone"></i>
+                    </div>
+                    <div class="contact-details">
+                        <h3>Phone</h3>
+                        <p>{{ user.phone_number }}</p>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-icon">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <div class="contact-details">
+                        <h3>Address</h3>
+                        <p>{{ user.address|default:"Not provided" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <a href="{% url 'users:profile-edit' %}" class="btn btn-action btn-edit">
+                <i class="fas fa-edit"></i>
+                Edit Profile
+            </a>
+            <a href="{% url 'users:password_change' %}" class="btn btn-action btn-password">
+                <i class="fas fa-key"></i>
+                Change Password
+            </a>
+        </div>
+
+        <div class="recent-activity">
+            <div class="activity-header">
+                <h2>Recent Activity</h2>
+            </div>
+            <div class="table-responsive">
+                <table class="activity-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>From</th>
+                            <th>To</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if user.is_driver %}
+                            {% for ride in user.get_rides_as_driver %}
+                                <tr>
+                                    <td>{{ ride.departure_time|date:"M d, Y" }}</td>
+                                    <td>{{ ride.departure_location }}</td>
+                                    <td>{{ ride.arrival_location }}</td>
+                                    <td>
+                                        <span class="status-badge status-{{ ride.status }}">
+                                            {{ ride.get_status_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-4">No recent rides</td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            {% for booking in user.get_bookings_as_passenger %}
+                                <tr>
+                                    <td>{{ booking.ride.departure_time|date:"M d, Y" }}</td>
+                                    <td>{{ booking.ride.departure_location }}</td>
+                                    <td>{{ booking.ride.arrival_location }}</td>
+                                    <td>
+                                        <span class="status-badge status-{{ booking.status }}">
+                                            {{ booking.get_status_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-4">No recent bookings</td>
+                                </tr>
+                            {% endfor %}
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

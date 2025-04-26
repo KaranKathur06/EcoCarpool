@@ -1,0 +1,153 @@
+[
+    {
+        "model": "vehicles.vehicletype",
+        "pk": 1,
+        "fields": {
+            "name": "Sedan",
+            "description": "A passenger car with a separate trunk for luggage"
+        }
+    },
+    {
+        "model": "vehicles.vehicletype",
+        "pk": 2,
+        "fields": {
+            "name": "SUV",
+            "description": "Sport Utility Vehicle with higher ground clearance"
+        }
+    },
+    {
+        "model": "vehicles.vehicletype",
+        "pk": 3,
+        "fields": {
+            "name": "Hatchback",
+            "description": "Car with a rear door that opens upwards"
+        }
+    },
+    {
+        "model": "vehicles.vehicletype",
+        "pk": 4,
+        "fields": {
+            "name": "MPV",
+            "description": "Multi-Purpose Vehicle designed to transport passengers"
+        }
+    },
+    {
+        "model": "vehicles.vehicletype",
+        "pk": 5,
+        "fields": {
+            "name": "Crossover",
+            "description": "Combines features of an SUV with a passenger car"
+        }
+    },
+    {
+        "model": "vehicles.vehiclecompany",
+        "pk": 1,
+        "fields": {
+            "name": "Toyota",
+            "country": "Japan",
+            "website": "https://www.toyota.com"
+        }
+    },
+    {
+        "model": "vehicles.vehiclecompany",
+        "pk": 2,
+        "fields": {
+            "name": "Honda",
+            "country": "Japan",
+            "website": "https://www.honda.com"
+        }
+    },
+    {
+        "model": "vehicles.vehiclecompany",
+        "pk": 3,
+        "fields": {
+            "name": "Maruti Suzuki",
+            "country": "India",
+            "website": "https://www.marutisuzuki.com"
+        }
+    },
+    {
+        "model": "vehicles.vehiclecompany",
+        "pk": 4,
+        "fields": {
+            "name": "Hyundai",
+            "country": "South Korea",
+            "website": "https://www.hyundai.com"
+        }
+    },
+    {
+        "model": "vehicles.vehiclecompany",
+        "pk": 5,
+        "fields": {
+            "name": "Tata",
+            "country": "India",
+            "website": "https://www.tatamotors.com"
+        }
+    },
+    {
+        "model": "vehicles.vehiclemodel",
+        "pk": 1,
+        "fields": {
+            "company": 1,
+            "name": "Camry",
+            "vehicle_type": 1,
+            "year_from": 2018,
+            "is_active": true
+        }
+    },
+    {
+        "model": "vehicles.vehiclemodel",
+        "pk": 2,
+        "fields": {
+            "company": 1,
+            "name": "Fortuner",
+            "vehicle_type": 2,
+            "year_from": 2016,
+            "is_active": true
+        }
+    },
+    {
+        "model": "vehicles.vehiclemodel",
+        "pk": 3,
+        "fields": {
+            "company": 2,
+            "name": "City",
+            "vehicle_type": 1,
+            "year_from": 2020,
+            "is_active": true
+        }
+    },
+    {
+        "model": "vehicles.vehiclemodel",
+        "pk": 4,
+        "fields": {
+            "company": 3,
+            "name": "Swift",
+            "vehicle_type": 3,
+            "year_from": 2018,
+            "is_active": true
+        }
+    },
+    {
+        "model": "vehicles.vehiclemodel",
+        "pk": 5,
+        "fields": {
+            "company": 4,
+            "name": "Creta",
+            "vehicle_type": 2,
+            "year_from": 2020,
+            "is_active": true
+        }
+    },
+    {
+        "model": "vehicles.vehiclemodel",
+        "pk": 6,
+        "fields": {
+            "company": 5,
+            "name": "Nexon",
+            "vehicle_type": 2,
+            "year_from": 2020,
+            "is_active": true
+        }
+    }
+] 

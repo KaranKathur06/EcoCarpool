@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Bookings - EcoCarpool{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">My Bookings</h2>
+
+    {% if bookings %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Ride</th>
+                    <th>Date & Time</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for booking in bookings %}
+                <tr>
+                    <td>
+                        <a href="{% url 'rides:ride-detail' booking.ride.id %}" class="text-decoration-none">
+                            {{ booking.ride.route_name|default:"Unnamed Route" }}
+                        </a>
+                    </td>
+                    <td>{{ booking.ride.ride_date|date:"M d, Y" }} {{ booking.ride.ride_time|time:"g:i A" }}</td>
+                    <td>{{ booking.ride.start_location }}</td>
+                    <td>{{ booking.ride.end_location }}</td>
+                    <td>
+                        <span class="badge {% if booking.status == 'confirmed' %}bg-success{% elif booking.status == 'pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                            {{ booking.status|title }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if booking.status == 'pending' %}
+                        <a href="{% url 'rides:cancel-booking' booking.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to cancel this booking?')">
+                            Cancel
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        You haven't made any bookings yet.
+        <a href="{% url 'dashboard:search-rides' %}" class="alert-link">Find a ride</a> to get started!
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 

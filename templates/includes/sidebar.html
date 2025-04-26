@@ -1,0 +1,94 @@
+{% load static %}
+
+<div class="sidebar">
+    <div class="sidebar-brand">
+        <a href="{% url 'dashboard:dashboard-home' %}">
+            <img src="{% static 'images/MAIN 2.png' %}" alt="EcoCarpool Logo" class="carpool-image">
+            <h2 class="text-center text-white">ECOCARPOOL</h2>
+        </a>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="sidebar-nav">
+        <a href="{% url 'dashboard:dashboard-home' %}" class="sidebar-item {% if request.resolver_match.url_name == 'dashboard-home' %}active{% endif %}">
+            <i class="fas fa-chart-line"></i>
+            Dashboard
+        </a>
+
+        <!-- RIDES SECTION -->
+        <div class="sidebar-heading">RIDES</div>
+        
+        {% if user.is_passenger %}
+        <!-- Passenger-specific options -->
+        <a href="{% url 'dashboard:search-rides' %}" class="sidebar-item {% if 'search' in request.path %}active{% endif %}">
+            <i class="fas fa-search"></i>
+            Find Rides
+        </a>
+        <a href="{% url 'rides:my-bookings' %}" class="sidebar-item {% if 'bookings' in request.path %}active{% endif %}">
+            <i class="fas fa-ticket-alt"></i>
+            My Bookings
+        </a>
+        {% endif %}
+
+        {% if user.is_driver %}
+        <!-- Driver-specific options -->
+        <a href="{% url 'rides:ride-create' %}" class="sidebar-item {% if 'create' in request.path %}active{% endif %}">
+            <i class="fas fa-plus-circle"></i>
+            Offer Ride
+        </a>
+        <a href="{% url 'rides:my-rides' %}" class="sidebar-item {% if 'my-rides' in request.path %}active{% endif %}">
+            <i class="fas fa-route"></i>
+            My Rides
+        </a>
+        {% endif %}
+
+        {% if user.is_driver %}
+        <!-- VEHICLES SECTION (Driver only) -->
+        <div class="sidebar-heading">VEHICLES</div>
+        <a href="{% url 'vehicles:vehicle-list' %}" class="sidebar-item {% if 'vehicles' in request.path %}active{% endif %}">
+            <i class="fas fa-car"></i>
+            My Vehicles
+        </a>
+        {% endif %}
+
+        <!-- PAYMENTS SECTION -->
+        <div class="sidebar-heading">PAYMENTS</div>
+        <a href="{% url 'payments:wallet' %}" class="sidebar-item {% if 'wallet' in request.path %}active{% endif %}">
+            <i class="fas fa-wallet"></i>
+            Wallet
+        </a>
+        <a href="{% url 'payments:history' %}" class="sidebar-item {% if 'history' in request.path %}active{% endif %}">
+            <i class="fas fa-history"></i>
+            Transaction History
+        </a>
+
+        <!-- ACCOUNT SECTION -->
+        <div class="sidebar-heading">ACCOUNT</div>
+        <a href="{% url 'users:profile' %}" class="sidebar-item {% if 'profile' in request.path %}active{% endif %}">
+            <i class="fas fa-user"></i>
+            Profile
+        </a>
+        <a href="{% url 'users:settings' %}" class="sidebar-item {% if 'settings' in request.path %}active{% endif %}">
+            <i class="fas fa-cog"></i>
+            Settings
+        </a>
+        <a href="{% url 'users:logout' %}" class="sidebar-item text-danger">
+            <i class="fas fa-sign-out-alt"></i>
+            Logout
+        </a>
+    </div>
+</div>
+
+<script>
+    // Add active class to current menu item
+    document.addEventListener('DOMContentLoaded', function() {
+        const currentPath = window.location.pathname;
+        const menuItems = document.querySelectorAll('.sidebar-item');
+        
+        menuItems.forEach(item => {
+            if (item.getAttribute('href') === currentPath) {
+                item.classList.add('active');
+            }
+        });
+    });
+</script> 

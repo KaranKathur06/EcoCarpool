@@ -1,13 +1,211 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Available Rides - EcoCarpool{% endblock %}
 
 {% block content %}
-<h1>Available Rides</h1>
-<ul>
-  {% for ride in rides %}
-    <li>
-      {{ ride.start_location.address }} to {{ ride.end_location.address }} 
-      ({{ ride.ride_date }} | Seats: {{ ride.available_seats }})
-    </li>
-  {% endfor %}
-</ul>
+<div class="container mt-4">
+    <div class="row">
+        {% for ride in rides %}
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <!-- Route Info -->
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-map-marker-alt text-danger me-2"></i>
+                                <h6 class="mb-0">{{ ride.start_location }}</h6>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-plane text-primary me-2"></i>
+                                <h6 class="mb-0">{{ ride.end_location }}</h6>
+                            </div>
+                        </div>
+                        <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle px-3 py-2">
+                            active
+                        </span>
+                    </div>
+
+                    <!-- Ride Info -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <i class="far fa-calendar text-muted me-2"></i>
+                                <span>{{ ride.date|date:"M d, Y" }}</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <i class="far fa-clock text-muted me-2"></i>
+                                <span>{{ ride.time|time:"g:i A" }}</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-car text-muted me-2"></i>
+                                <span>{{ ride.vehicle.company }} {{ ride.vehicle.model }}</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-users text-muted me-2"></i>
+                                <span>{{ ride.available_seats }} seats left</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Price and Driver -->
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="d-flex align-items-center">
+                            <img src="{{ ride.driver.profile_picture.url|default:'/static/images/default-avatar.png' }}" 
+                                 alt="{{ ride.driver.get_full_name }}"
+                                 class="rounded-circle me-2"
+                                 style="width: 32px; height: 32px; object-fit: cover;">
+                            <div>
+                                <small class="text-muted d-block">Driven by</small>
+                                <span class="fw-medium">{{ ride.driver.get_full_name }}</span>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <small class="text-muted d-block">Price per seat</small>
+                            <span class="text-success fw-bold">₹{{ ride.price_per_seat }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="action-buttons">
+                        <button onclick="window.location.href='{% url 'rides:ride-detail' ride.pk %}'" class="btn btn-view">
+                            <i class="fas fa-eye"></i> VIEW DETAILS
+                        </button>
+                        {% if ride.driver == request.user %}
+                        <button onclick="window.location.href='{% url 'rides:edit-ride' ride.pk %}'" class="btn btn-edit">
+                            <i class="fas fa-edit"></i> EDIT
+                        </button>
+                        <button onclick="window.location.href='{% url 'rides:delete-ride' ride.pk %}'" class="btn btn-cancel">
+                            <i class="fas fa-times"></i> CANCEL
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <div class="mb-4">
+                <i class="fas fa-car-side fa-3x text-muted"></i>
+            </div>
+            <h5 class="fw-bold mb-2">No Rides Available</h5>
+            <p class="text-muted mb-4">There are no rides available at the moment.</p>
+            <a href="{% url 'rides:ride-create' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i> Offer a Ride
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+.card {
+    background: white;
+    border-radius: 8px;
+}
+
+.badge {
+    font-weight: 500;
+    font-size: 0.85rem;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.action-buttons .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 24px;
+    font-size: 13px;
+    font-weight: 500;
+    border: none;
+    border-radius: 4px;
+    color: #fff;
+    cursor: pointer;
+    text-transform: uppercase;
+    background: #495057;
+    min-width: fit-content;
+    white-space: nowrap;
+}
+
+.action-buttons .btn i {
+    margin-right: 10px;
+    font-size: 14px;
+}
+
+.action-buttons .btn-view {
+    background-color: #0d6efd;
+}
+
+.action-buttons .btn-edit {
+    background-color: #212529;
+}
+
+.action-buttons .btn-cancel {
+    background-color: #dc3545;
+}
+
+/* Remove any Bootstrap interference */
+.action-buttons .btn:hover {
+    opacity: 0.9;
+}
+
+.action-buttons .btn:active {
+    transform: translateY(1px);
+}
+
+/* Override any Bootstrap margins */
+.action-buttons .btn {
+    margin: 0 !important;
+}
+
+/* Ensure proper icon alignment */
+.action-buttons .btn i {
+    display: inline-block;
+    width: auto;
+    height: auto;
+    margin-right: 8px;
+    line-height: 1;
+}
+
+/* Remove text decoration */
+.action-buttons .btn {
+    text-decoration: none !important;
+}
+
+/* Active badge styling */
+.badge-active {
+    color: #198754;
+    background-color: #e8f5e9;
+    border: 1px solid rgba(25, 135, 84, 0.2);
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+i {
+    width: 16px;
+    text-align: center;
+}
+
+.text-muted {
+    color: #6c757d !important;
+}
+
+small {
+    font-size: 0.875rem;
+}
+</style>
 {% endblock %}

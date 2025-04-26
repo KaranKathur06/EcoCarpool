@@ -1,0 +1,13 @@
+.dashboard-card {
+  transition: transform 0.3s ease;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-5px);
+}
+
+.chart-container {
+  position: relative;
+  margin: auto;
+  height: 300px;
+} 

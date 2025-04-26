@@ -1,0 +1,25 @@
+.chart-area {
+    position: relative;
+    height: 300px;
+    margin: 0 auto;
+}
+
+.border-left-primary {
+    border-left: 4px solid #4e73df;
+}
+
+.border-left-success {
+    border-left: 4px solid #1cc88a;
+}
+
+.border-left-info {
+    border-left: 4px solid #36b9cc;
+}
+
+.card-body {
+    transition: transform 0.3s ease;
+}
+
+.card-body:hover {
+    transform: translateY(-5px);
+} 

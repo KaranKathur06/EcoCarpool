@@ -1,0 +1,288 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Rides - EcoCarpool{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-2 text-gray-800">My Rides</h1>
+            <p class="mb-0 text-gray-600">Manage your rides and track their status</p>
+        </div>
+        <a href="{% url 'rides:ride-create' %}" class="btn btn-primary">
+            <i class="fas fa-plus-circle me-2"></i>Create New Ride
+        </a>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 bg-white">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-0">
+                            <i class="fas fa-search text-gray-600"></i>
+                        </span>
+                        <input type="text" id="searchInput" class="form-control border-0 bg-light" placeholder="Search rides...">
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="d-flex justify-content-md-end mt-3 mt-md-0 gap-2">
+                        <select class="form-select bg-light border-0" id="statusFilter">
+                            <option value="all">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                        <select class="form-select bg-light border-0" id="dateFilter">
+                            <option value="all">All Time</option>
+                            <option value="today">Today</option>
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                        </select>
+                        <select class="form-select bg-light border-0" id="sortBy">
+                            <option value="date_desc">Latest First</option>
+                            <option value="date_asc">Oldest First</option>
+                            <option value="price_high">Price: High to Low</option>
+                            <option value="price_low">Price: Low to High</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rides Grid -->
+    <div class="row" id="ridesGrid">
+        {% if rides %}
+            {% for ride in rides %}
+                <div class="col-12 col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 shadow-sm hover-shadow">
+                        <div class="card-body">
+                            <!-- Status Badge -->
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="card-title mb-0 text-primary">
+                                    <i class="fas fa-map-marker-alt me-2"></i>{{ ride.start_location }} → {{ ride.end_location }}
+                                </h5>
+                                {% if ride.status == 'active' %}
+                                    <span class="badge bg-primary">Active</span>
+                                {% elif ride.status == 'completed' %}
+                                    <span class="badge bg-success">Completed</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Cancelled</span>
+                                {% endif %}
+                            </div>
+
+                            <!-- Ride Details -->
+                            <div class="ride-details mb-3">
+                                <p class="mb-2">
+                                    <i class="fas fa-calendar me-2 text-gray-600"></i>{{ ride.ride_date|date:"M d, Y" }}
+                                </p>
+                                <p class="mb-2">
+                                    <i class="fas fa-clock me-2 text-gray-600"></i>{{ ride.ride_date|date:"g:i A" }}
+                                </p>
+                                <p class="mb-2">
+                                    <i class="fas fa-car me-2 text-gray-600"></i>{{ ride.vehicle.make }} {{ ride.vehicle.model }}
+                                </p>
+                                <p class="mb-2">
+                                    <i class="fas fa-users me-2 text-gray-600"></i>{{ ride.get_available_seats_count }} seats available
+                                </p>
+                                <p class="mb-0">
+                                    <i class="fas fa-money-bill me-2 text-gray-600"></i>${{ ride.price_per_seat }} per seat
+                                </p>
+                            </div>
+
+                            <!-- Bookings Summary -->
+                            {% if ride.bookings.exists %}
+                            <div class="bookings-summary mb-3">
+                                <h6 class="text-gray-700 mb-2">Bookings</h6>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-group">
+                                        {% for booking in ride.bookings.all|slice:":3" %}
+                                            <img src="{{ booking.user.get_avatar_url }}" class="avatar rounded-circle" alt="{{ booking.user.get_full_name }}" title="{{ booking.user.get_full_name }}">
+                                        {% endfor %}
+                                    </div>
+                                    {% if ride.bookings.count > 3 %}
+                                        <span class="ms-2 text-gray-600">+{{ ride.bookings.count|add:"-3" }} more</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Action Buttons -->
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <a href="{% url 'rides:ride-detail' ride.pk %}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-info-circle me-1"></i>View Details
+                                </a>
+                                <div class="btn-group">
+                                    <a href="{% url 'rides:edit-ride' ride.pk %}" class="btn btn-outline-secondary btn-sm">
+                                        <i class="fas fa-edit me-1"></i>Edit
+                                    </a>
+                                    {% if ride.status == 'active' %}
+                                        <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#cancelRideModal{{ ride.pk }}">
+                                            <i class="fas fa-times me-1"></i>Cancel
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cancel Ride Modal -->
+                {% if ride.status == 'active' %}
+                <div class="modal fade" id="cancelRideModal{{ ride.pk }}" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Cancel Ride</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Are you sure you want to cancel this ride?</p>
+                                <p><strong>From:</strong> {{ ride.start_location }}<br><strong>To:</strong> {{ ride.end_location }}</p>
+                                <p class="text-danger"><small>This will notify all passengers who have booked this ride.</small></p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <form action="{% url 'rides:delete-ride' ride.pk %}" method="post" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger">Cancel Ride</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <img src="{% static 'images/empty-rides.svg' %}" alt="No rides found" class="mb-4" style="max-width: 200px;">
+                    <h3>No Rides Found</h3>
+                    <p class="text-muted mb-4">You haven't created any rides yet.</p>
+                    <a href="{% url 'rides:ride-create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus-circle me-2"></i>Create Your First Ride
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% block extra_css %}
+<style>
+    .hover-shadow {
+        transition: box-shadow 0.3s ease-in-out;
+    }
+    .hover-shadow:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+    .avatar-group {
+        display: flex;
+        margin-left: -0.5rem;
+    }
+    .avatar-group .avatar {
+        width: 32px;
+        height: 32px;
+        border: 2px solid #fff;
+        margin-left: -0.5rem;
+    }
+    .ride-details p {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+    .form-select, .form-control {
+        border-radius: 0.5rem;
+    }
+    .input-group-text {
+        border-radius: 0.5rem 0 0 0.5rem;
+    }
+    .form-control:focus {
+        box-shadow: none;
+        border-color: #4e73df;
+    }
+    .card {
+        border-radius: 1rem;
+        border: none;
+    }
+    .card-header {
+        border-radius: 1rem 1rem 0 0 !important;
+    }
+    .btn {
+        border-radius: 0.5rem;
+        padding: 0.5rem 1rem;
+    }
+    .btn-group .btn {
+        border-radius: 0.5rem;
+    }
+    .badge {
+        padding: 0.5rem 0.75rem;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+        const statusFilter = document.getElementById('statusFilter');
+        const dateFilter = document.getElementById('dateFilter');
+        const sortBy = document.getElementById('sortBy');
+
+        // Set initial values from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        searchInput.value = urlParams.get('search') || '';
+        statusFilter.value = urlParams.get('status') || 'all';
+        dateFilter.value = urlParams.get('date') || 'all';
+        sortBy.value = urlParams.get('sort') || 'date_desc';
+
+        function applyFilters() {
+            const params = new URLSearchParams();
+            
+            if (searchInput.value) {
+                params.set('search', searchInput.value);
+            }
+            if (statusFilter.value !== 'all') {
+                params.set('status', statusFilter.value);
+            }
+            if (dateFilter.value !== 'all') {
+                params.set('date', dateFilter.value);
+            }
+            if (sortBy.value !== 'date_desc') {
+                params.set('sort', sortBy.value);
+            }
+            
+            // Redirect with filters
+            window.location.href = `${window.location.pathname}?${params.toString()}`;
+        }
+
+        // Add debounce for search input
+        let searchTimeout;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(applyFilters, 500);
+        });
+
+        // Immediate filter application for select elements
+        statusFilter.addEventListener('change', applyFilters);
+        dateFilter.addEventListener('change', applyFilters);
+        sortBy.addEventListener('change', applyFilters);
+
+        // Update status badge colors
+        document.querySelectorAll('.badge').forEach(badge => {
+            if (badge.textContent === 'Active') {
+                badge.classList.add('bg-primary');
+            } else if (badge.textContent === 'Completed') {
+                badge.classList.add('bg-success');
+            } else if (badge.textContent === 'Cancelled') {
+                badge.classList.add('bg-danger');
+            }
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %} 

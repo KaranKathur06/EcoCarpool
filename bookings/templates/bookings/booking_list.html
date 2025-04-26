@@ -1,35 +1,30 @@
 {% extends 'base.html' %}
+
+{% block title %}Bookings - EcoCarpool{% endblock %}
+
 {% block content %}
-<div class="container-fluid">
-    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
-        <h1 class="h2">All Bookings</h1>
-    </div>
-    
-    <div class="table-responsive">
-        <table class="table table-striped table-sm">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>User</th>
-                    <th>Ride</th>
-                    <th>Booking Date</th>
-                    <th>Status</th>
-                    <th>Amount</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for booking in bookings %}
-                <tr>
-                    <td>{{ forloop.counter }}</td>
-                    <td>{{ booking.user.username }}</td>
-                    <td>{{ booking.ride }}</td>
-                    <td>{{ booking.booking_date }}</td>
-                    <td>{{ booking.status }}</td>
-                    <td>₹{{ booking.amount }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<div class="container">
+    <h2>My Bookings</h2>
+    <div class="row">
+        {% for booking in bookings %}
+        <div class="col-md-6 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Booking #{{ booking.txtId }}</h5>
+                    <p class="card-text">
+                        <strong>Seats:</strong> {{ booking.no_of_seat }}<br>
+                        <strong>Price:</strong> ${{ booking.price }}<br>
+                        <strong>Status:</strong> {{ booking.paymentStatus }}<br>
+                        <strong>Date:</strong> {{ booking.created_at|date:"M d, Y" }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <p>No bookings found.</p>
+        </div>
+        {% endfor %}
     </div>
 </div>
 {% endblock %}

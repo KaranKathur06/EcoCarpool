@@ -1,0 +1,256 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>User Management</h2>
+        <div class="d-flex gap-2">
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="Search users..." id="userSearch">
+                <button class="btn btn-outline-secondary" type="button" id="searchBtn">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+            <select class="form-select" id="roleFilter">
+                <option value="">All Roles</option>
+                <option value="driver">Drivers</option>
+                <option value="passenger">Passengers</option>
+            </select>
+            <select class="form-select" id="statusFilter">
+                <option value="">All Status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">Total Users</h6>
+                    <h2 class="mb-0">{{ total_users }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">Active Users</h6>
+                    <h2 class="mb-0">{{ active_users }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">Drivers</h6>
+                    <h2 class="mb-0">{{ drivers }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">Passengers</h6>
+                    <h2 class="mb-0">{{ passengers }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Role</th>
+                            <th>Email</th>
+                            <th>Joined</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ user.get_profile_picture_url }}" 
+                                         class="rounded-circle me-2" 
+                                         width="40" 
+                                         height="40"
+                                         alt="{{ user.get_full_name }}">
+                                    <div>
+                                        <h6 class="mb-0">{{ user.get_full_name|default:user.username }}</h6>
+                                        <small class="text-muted">@{{ user.username }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge {% if user.role == 'driver' %}bg-primary{% else %}bg-info{% endif %}">
+                                    {{ user.role|title }}
+                                </span>
+                                {% if user.role == 'driver' and not user.is_verified %}
+                                <span class="badge bg-warning">Unverified</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ user.email }}</td>
+                            <td>{{ user.date_joined|date:"M d, Y" }}</td>
+                            <td>
+                                <span class="badge {% if user.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ user.is_active|yesno:"Active,Inactive" }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <button type="button" 
+                                            class="btn btn-sm {% if user.is_active %}btn-danger{% else %}btn-success{% endif %} toggle-status"
+                                            data-user-id="{{ user.id }}"
+                                            data-current-status="{{ user.is_active|lower }}">
+                                        {{ user.is_active|yesno:"Deactivate,Activate" }}
+                                    </button>
+                                    {% if user.role == 'driver' and not user.is_verified %}
+                                    <button type="button" 
+                                            class="btn btn-sm btn-primary verify-driver"
+                                            data-user-id="{{ user.id }}">
+                                        Verify Driver
+                                    </button>
+                                    {% endif %}
+                                    <a href="{% url 'users:profile' user.username %}" 
+                                       class="btn btn-sm btn-info">
+                                        View Profile
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center">No users found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if is_paginated %}
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                    <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle user search
+    const searchBtn = document.getElementById('searchBtn');
+    const userSearch = document.getElementById('userSearch');
+    const roleFilter = document.getElementById('roleFilter');
+    const statusFilter = document.getElementById('statusFilter');
+
+    function updateSearch() {
+        const searchParams = new URLSearchParams(window.location.search);
+        if (userSearch.value) searchParams.set('q', userSearch.value);
+        if (roleFilter.value) searchParams.set('role', roleFilter.value);
+        if (statusFilter.value) searchParams.set('status', statusFilter.value);
+        window.location.search = searchParams.toString();
+    }
+
+    searchBtn.addEventListener('click', updateSearch);
+    userSearch.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') updateSearch();
+    });
+    roleFilter.addEventListener('change', updateSearch);
+    statusFilter.addEventListener('change', updateSearch);
+
+    // Handle user status toggle
+    document.querySelectorAll('.toggle-status').forEach(button => {
+        button.addEventListener('click', async function() {
+            const userId = this.dataset.userId;
+            try {
+                const response = await fetch(`/admin/users/${userId}/toggle-status/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert(data.error || 'An error occurred');
+                }
+            } catch (error) {
+                alert('An error occurred');
+            }
+        });
+    });
+
+    // Handle driver verification
+    document.querySelectorAll('.verify-driver').forEach(button => {
+        button.addEventListener('click', async function() {
+            const userId = this.dataset.userId;
+            try {
+                const response = await fetch(`/admin/users/${userId}/verify-driver/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert(data.error || 'An error occurred');
+                }
+            } catch (error) {
+                alert('An error occurred');
+            }
+        });
+    });
+
+    // CSRF token helper
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+});
+</script>
+{% endblock %}
+{% endblock %} 

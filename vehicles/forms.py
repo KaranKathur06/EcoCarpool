@@ -4,7 +4,79 @@ from django.utils import timezone
 from .models import Vehicle, VehicleDocument, VehicleType, VehicleCompany, VehicleModel
 from datetime import datetime
 
+class GroupedModelChoiceField(forms.ModelChoiceField):
+    def __init__(self, queryset, group_by_field, *args, **kwargs):
+        self.group_by_field = group_by_field  # Set this first!
+        super().__init__(queryset, *args, **kwargs)
+
+    @property
+    def choices(self):
+        grouped = {}
+        for obj in self.queryset:
+            group = getattr(obj, self.group_by_field)
+            grouped.setdefault(group, []).append((obj.pk, str(obj)))
+        choices = []
+        for group, options in grouped.items():
+            choices.append((group, options))
+        return choices
+
+    @choices.setter
+    def choices(self, value):
+        # Allow setting choices if needed (for compatibility)
+        self._choices = value
+
 class VehicleForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Set the queryset in __init__ to avoid database access during module import
+        try:
+            self.fields['vehicle_type'] = GroupedModelChoiceField(
+                queryset=VehicleType.objects.all().order_by('category', 'type_name'),
+                group_by_field='category',
+                label='Vehicle Type',
+                required=True,
+                widget=forms.Select(attrs={'class': 'form-control'})
+            )
+        except:
+            # If tables don't exist yet, create a basic field
+            self.fields['vehicle_type'] = forms.ModelChoiceField(
+                queryset=VehicleType.objects.none(),
+                label='Vehicle Type',
+                required=True,
+                widget=forms.Select(attrs={'class': 'form-control'})
+            )
+
+        # Add Bootstrap classes to all fields
+        for field_name, field in self.fields.items():
+            if field_name not in ['vehicle_photo']:
+                field.widget.attrs['class'] = 'form-control'
+            
+            # Add required field indicator
+            if field.required:
+                field.widget.attrs['required'] = 'required'
+                field.label = f"{field.label} *"
+
+        # Set up dynamic filtering for company and model fields
+        if 'vehicle_type' in self.data:
+            try:
+                vehicle_type_id = int(self.data.get('vehicle_type'))
+                self.fields['company'].queryset = VehicleCompany.objects.filter(
+                    models__type_id=vehicle_type_id,
+                    is_active=True
+                ).distinct().order_by('company_name')
+            except (ValueError, TypeError):
+                pass
+
+        if 'company' in self.data:
+            try:
+                company_id = int(self.data.get('company'))
+                self.fields['model'].queryset = VehicleModel.objects.filter(
+                    company_id=company_id,
+                    is_active=True
+                ).order_by('model_name')
+            except (ValueError, TypeError):
+                pass
+
     class Meta:
         model = Vehicle
         fields = [
@@ -17,81 +89,29 @@ class VehicleForm(forms.ModelForm):
             'seating_capacity',
             'fuel_type',
             'mileage',
-            'vehicle_photo'
+            'vehicle_photo',
         ]
         widgets = {
-            'vehicle_type': forms.Select(attrs={
-                'class': 'form-control',
-                'placeholder': 'Select vehicle type'
-            }),
-            'company': forms.Select(attrs={
-                'class': 'form-control',
-                'placeholder': 'Select company/brand'
-            }),
-            'model': forms.Select(attrs={
-                'class': 'form-control',
-                'placeholder': 'Select vehicle model'
-            }),
-            'license_plate': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'e.g., GJ-01-XX-1234'
-            }),
-            'color': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'e.g., Black, White, Silver'
-            }),
             'year': forms.NumberInput(attrs={
-                'class': 'form-control',
                 'min': 1900,
-                'max': datetime.now().year + 1,
-                'placeholder': f'Enter year (1900-{datetime.now().year + 1})'
+                'max': timezone.now().year + 1,
+                'class': 'form-control'
             }),
             'seating_capacity': forms.NumberInput(attrs={
-                'class': 'form-control',
                 'min': 2,
                 'max': 10,
-                'placeholder': 'Enter number of seats (2-10)'
+                'class': 'form-control'
             }),
-            'fuel_type': forms.Select(attrs={'class': 'form-control'}),
             'mileage': forms.NumberInput(attrs={
                 'class': 'form-control',
-                'step': '0.1',
-                'placeholder': 'Enter mileage in km/l'
+                'placeholder': 'Optional'
             }),
-            'vehicle_photo': forms.FileInput(attrs={'class': 'form-control'})
+            'vehicle_photo': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': 'image/*'
+            }),
         }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Add required asterisk to required fields
-        for field in self.fields:
-            if self.fields[field].required:
-                self.fields[field].label = f"{self.fields[field].label}*"
-        
-        # Add help texts
-        self.fields['license_plate'].help_text = "Enter vehicle registration number in correct format"
-        self.fields['mileage'].help_text = "Enter mileage in kilometers per liter"
-        self.fields['seating_capacity'].help_text = "Enter total number of seats including driver"
-        
-        # Set choices for vehicle type and company with empty option
-        self.fields['vehicle_type'].queryset = VehicleType.objects.all().order_by('type_name')
-        self.fields['company'].queryset = VehicleCompany.objects.all().order_by('company_name')
-        
-        # Add empty label for select fields
-        self.fields['vehicle_type'].empty_label = "Select vehicle type"
-        self.fields['company'].empty_label = "Select company/brand"
-        self.fields['model'].empty_label = "Select vehicle model"
-        
-        # Add help text for vehicle type
-        self.fields['vehicle_type'].help_text = "Select the type of vehicle you are registering"
-        
-        # If instance exists, filter model choices
-        if self.instance.pk and self.instance.company:
-            self.fields['model'].queryset = VehicleModel.objects.filter(
-                company=self.instance.company
-            ).order_by('name')
-        else:
-            self.fields['model'].queryset = VehicleModel.objects.none()
 
     def clean(self):
         cleaned_data = super().clean()
@@ -123,18 +143,38 @@ class VehicleForm(forms.ModelForm):
 class VehicleDocumentForm(forms.ModelForm):
     class Meta:
         model = VehicleDocument
-        fields = ['document_type', 'document_file', 'expiry_date']
+        fields = [
+            'document_type',
+            'document_number',
+            'issue_date',
+            'expiry_date',
+            'document_file',
+        ]
         widgets = {
-            'document_type': forms.Select(attrs={'class': 'form-control'}),
+            'issue_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'expiry_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'document_file': forms.FileInput(attrs={'class': 'form-control'}),
-            'expiry_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'})
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        for field in self.fields:
-            if self.fields[field].required:
-                self.fields[field].label = f"{self.fields[field].label}*"
+        
+        # Add Bootstrap classes to all fields
+        for field_name, field in self.fields.items():
+            field.widget.attrs['class'] = 'form-control'
+            
+            # Add required field indicator
+            if field.required:
+                field.widget.attrs['required'] = 'required'
+                field.label = f"{field.label} *"
+
+    def clean(self):
+        cleaned_data = super().clean()
+        issue_date = cleaned_data.get('issue_date')
+        expiry_date = cleaned_data.get('expiry_date')
+
+        if issue_date and expiry_date and issue_date > expiry_date:
+            raise forms.ValidationError("Issue date cannot be after expiry date.")
 
     def clean_file(self):
         file = self.cleaned_data.get('file')

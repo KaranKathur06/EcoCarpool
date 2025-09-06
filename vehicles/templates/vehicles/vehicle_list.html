@@ -5,47 +5,221 @@
 
 {% block content %}
 <div class="container py-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="h3 mb-0">My Vehicles</h2>
-        <a href="{% url 'vehicles:add_vehicle' %}" class="btn btn-primary">
-            <i class="fas fa-plus me-2"></i>Add New Vehicle
+    <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800">My Vehicles</h2>
+            <p class="text-gray-500">Manage your registered vehicles for carpooling</p>
+        </div>
+        <div class="mt-4 md:mt-0 flex space-x-3">
+            <a href="{% url 'vehicles:add_vehicle' %}" class="px-4 py-2 bg-primary text-white rounded-md shadow-sm text-sm font-medium hover:bg-primary/90 focus:outline-none !rounded-button whitespace-nowrap">
+                <i class="ri-add-line mr-2"></i>
+                Add New Vehicle
         </a>
+        </div>
     </div>
-    <div class="row">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         {% for vehicle in vehicles %}
-        <div class="col-md-6 mb-3">
-            <div class="card shadow-sm border-0 rounded-lg">
-                <div class="card-body">
-                    <h5 class="card-title">{{ vehicle.make }} {{ vehicle.model }}</h5>
-                    <p class="card-text">
-                        <strong>Year:</strong> {{ vehicle.year }}<br>
-                        <strong>License Plate:</strong> {{ vehicle.license_plate }}<br>
-                        <strong>Color:</strong> {{ vehicle.color }}<br>
-                        <strong>Seats:</strong> {{ vehicle.seats_available }}
-                    </p>
-                    <div class="d-flex gap-2">
-                        <a href="{% url 'vehicles:vehicle-detail' vehicle.pk %}" class="btn btn-primary">
-                            <i class="fas fa-eye me-2"></i>View Details
-                        </a>
-                        <a href="{% url 'vehicles:vehicle-update' vehicle.pk %}" class="btn btn-outline-primary">
-                            <i class="fas fa-edit me-2"></i>Edit
-                        </a>
+        <div class="bg-white rounded-lg shadow-md p-6 border border-gray-100 flex flex-col">
+            <div class="flex items-center mb-4">
+                <div class="w-32 h-20 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center mr-6">
+                    {% if vehicle.vehicle_photo %}
+                        <img src="{{ vehicle.vehicle_photo.url }}" alt="{{ vehicle }}" class="object-cover w-full h-full">
+                    {% else %}
+                        <i class="ri-car-line text-5xl text-gray-300"></i>
+                    {% endif %}
+                </div>
+                <div class="flex-1">
+                    <div class="flex items-center mb-1">
+                        <h3 class="text-lg font-semibold text-gray-800 mr-2">{{ vehicle.company }} {{ vehicle.model }}</h3>
+                        {% if vehicle.is_active %}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mr-2">Active</span>
+                        {% else %}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 mr-2">Inactive</span>
+                        {% endif %}
+                        <label class="inline-flex items-center cursor-pointer ml-2">
+                            <input type="checkbox" class="toggle-checkbox sr-only" {% if vehicle.is_active %}checked{% endif %} disabled>
+                            <span class="toggle-label w-10 h-5 bg-gray-200 rounded-full flex items-center p-1 transition-colors duration-200">
+                                <span class="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 {% if vehicle.is_active %}translate-x-5{% endif %}"></span>
+                            </span>
+                        </label>
+                    </div>
+                    <div class="text-xs text-gray-500 mb-1">{{ vehicle.year }} • {{ vehicle.color }}</div>
+                    <div class="text-xs text-gray-500">License Plate: <span class="font-semibold text-gray-700">{{ vehicle.license_plate }}</span></div>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <div class="text-xs text-gray-500">Total Rides</div>
+                    <div class="text-lg font-bold text-gray-800">{{ vehicle.total_rides|default:'0' }}</div>
+                </div>
+                <div>
+                    <div class="text-xs text-gray-500">Total Earnings</div>
+                    <div class="text-lg font-bold text-green-600">₹{{ vehicle.total_earnings|default:'0.00' }}</div>
+                </div>
+                <div>
+                    <div class="text-xs text-gray-500">Rides This Month</div>
+                    <div class="text-lg font-bold text-gray-800">{{ vehicle.rides_this_month|default:'0' }}</div>
+                </div>
+                <div>
+                    <div class="text-xs text-gray-500">Average Rating</div>
+                    <div class="flex items-center text-lg font-bold text-yellow-500">
+                        <i class="ri-star-fill mr-1"></i>{{ vehicle.average_rating|default:'-' }}
                     </div>
                 </div>
+                <div>
+                    <div class="text-xs text-gray-500">Fuel Efficiency</div>
+                    <div class="text-lg font-bold text-gray-800">{{ vehicle.mileage|default:'-' }} {% if vehicle.fuel_type == 'electric' %}Electric{% else %}mpg{% endif %}</div>
+                </div>
+                <div>
+                    <div class="text-xs text-gray-500">CO₂ Saved</div>
+                    <div class="text-lg font-bold text-green-600">{{ vehicle.co2_saved|default:'-' }} tons</div>
+                </div>
+            </div>
+            <div class="flex space-x-2 mt-auto">
+                <a href="{% url 'vehicles:vehicle-update' vehicle.pk %}" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 focus:outline-none"><i class="ri-edit-2-line mr-1"></i>Edit</a>
+                <a href="{% url 'vehicles:vehicle-delete' vehicle.pk %}" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 focus:outline-none"><i class="ri-delete-bin-6-line mr-1"></i>Delete</a>
             </div>
         </div>
         {% empty %}
-        <div class="col-12 text-center">
-            <div class="py-5">
-                <i class="fas fa-car fa-4x text-muted mb-4"></i>
-                <h4 class="text-muted">No vehicles registered yet</h4>
-                <p class="text-muted mb-4">Add your first vehicle to start offering rides</p>
-                <a href="{% url 'vehicles:add_vehicle' %}" class="btn btn-primary">
-                    <i class="fas fa-plus me-2"></i>Add New Vehicle
+        <div class="flex flex-col items-center justify-center min-h-[40vh] w-full">
+            <div class="flex flex-row items-center justify-center w-full max-w-7xl bg-white rounded-2xl shadow-md border border-gray-100 mx-auto py-6 px-16">
+                <div class="bg-blue-100 rounded-full p-8 mr-12">
+                    <i class="ri-car-line text-6xl text-primary"></i>
+                </div>
+                <div class="flex flex-col items-center flex-1">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-1">No Vehicles Registered</h2>
+                    <p class="text-gray-500 mb-4 text-center max-w-2xl text-base">You haven't added any vehicles yet. Add your first vehicle to start offering rides and managing your carpooling activity.</p>
+                    <a href="{% url 'vehicles:add_vehicle' %}" class="px-8 py-3 rounded-xl bg-primary text-white font-bold text-lg shadow hover:bg-primary/90 transition flex items-center gap-2">
+                        <i class="ri-add-line text-xl"></i> Add New Vehicle
                 </a>
+                </div>
             </div>
         </div>
         {% endfor %}
+    </div>
+    <!-- Vehicle Performance & Maintenance Schedule -->
+    <div class="mt-10">
+        <div class="bg-white rounded-xl shadow p-6 mb-8">
+            <h2 class="text-lg font-semibold mb-4">Vehicle Performance</h2>
+            <div class="flex items-center justify-between mb-4">
+                <div></div>
+                <div class="space-x-2">
+                    <button class="px-3 py-1 text-xs font-medium text-white bg-primary rounded-full">Monthly</button>
+                    <button class="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full">Quarterly</button>
+                    <button class="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full">Yearly</button>
+                </div>
+            </div>
+            <div class="w-full h-64 bg-gray-50 rounded flex items-center justify-center">
+                <span class="text-gray-400">[Performance Chart Placeholder]</span>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-6 mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold">Maintenance Schedule</h2>
+                <a href="#" class="text-primary font-medium text-sm flex items-center"><span class="mr-1">+</span>Schedule Service</a>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-sm">
+                    <thead>
+                        <tr class="text-gray-500 text-xs uppercase">
+                            <th class="py-2 px-4 text-left">Vehicle</th>
+                            <th class="py-2 px-4 text-left">Service Type</th>
+                            <th class="py-2 px-4 text-left">Last Service</th>
+                            <th class="py-2 px-4 text-left">Next Service</th>
+                            <th class="py-2 px-4 text-left">Status</th>
+                            <th class="py-2 px-4 text-left">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        <tr>
+                            <td class="py-3 px-4 flex items-center"><span class="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center mr-2"><i class="ri-car-line text-green-400"></i></span> <span>
+                                <span class="font-medium text-gray-800">Toyota Prius</span><br><span class="text-xs text-gray-400">ABC-1234</span></span></td>
+                            <td class="py-3 px-4">Oil Change</td>
+                            <td class="py-3 px-4">Mar 15, 2025</td>
+                            <td class="py-3 px-4">Jun 15, 2025</td>
+                            <td class="py-3 px-4"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs">Scheduled</span></td>
+                            <td class="py-3 px-4"><a href="#" class="text-primary font-medium">Reschedule</a></td>
+                        </tr>
+                        <tr>
+                            <td class="py-3 px-4 flex items-center"><span class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center mr-2"><i class="ri-car-line text-blue-400"></i></span> <span>
+                                <span class="font-medium text-gray-800">Tesla Model 3</span><br><span class="text-xs text-gray-400">XYZ-5678</span></span></td>
+                            <td class="py-3 px-4">Battery Check</td>
+                            <td class="py-3 px-4">Apr 02, 2025</td>
+                            <td class="py-3 px-4">Oct 02, 2025</td>
+                            <td class="py-3 px-4"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs">Scheduled</span></td>
+                            <td class="py-3 px-4"><a href="#" class="text-primary font-medium">Reschedule</a></td>
+                        </tr>
+                        <tr>
+                            <td class="py-3 px-4 flex items-center"><span class="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center mr-2"><i class="ri-car-line text-gray-400"></i></span> <span>
+                                <span class="font-medium text-gray-800">Honda CR-V</span><br><span class="text-xs text-gray-400">DEF-9012</span></span></td>
+                            <td class="py-3 px-4">Full Service</td>
+                            <td class="py-3 px-4">Jan 10, 2025</td>
+                            <td class="py-3 px-4">May 04, 2025</td>
+                            <td class="py-3 px-4"><span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs">Overdue</span></td>
+                            <td class="py-3 px-4"><a href="#" class="text-primary font-medium">Schedule Now</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold">Vehicle Documents</h2>
+                <a href="#" class="text-primary font-medium text-sm flex items-center"><i class="ri-upload-cloud-line mr-1"></i>Upload Document</a>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-sm">
+                    <thead>
+                        <tr class="text-gray-500 text-xs uppercase">
+                            <th class="py-2 px-4 text-left">Vehicle</th>
+                            <th class="py-2 px-4 text-left">Document Type</th>
+                            <th class="py-2 px-4 text-left">Issue Date</th>
+                            <th class="py-2 px-4 text-left">Expiry Date</th>
+                            <th class="py-2 px-4 text-left">Status</th>
+                            <th class="py-2 px-4 text-left">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        <tr>
+                            <td class="py-3 px-4 flex items-center"><span class="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center mr-2"><i class="ri-car-line text-green-400"></i></span> <span>
+                                <span class="font-medium text-gray-800">Toyota Prius</span><br><span class="text-xs text-gray-400">ABC-1234</span></span></td>
+                            <td class="py-3 px-4"><i class="ri-file-2-line mr-1"></i>Insurance</td>
+                            <td class="py-3 px-4">Jan 15, 2025</td>
+                            <td class="py-3 px-4">Jan 15, 2026</td>
+                            <td class="py-3 px-4"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs">Valid</span></td>
+                            <td class="py-3 px-4 flex space-x-2"><a href="#" class="text-gray-500 hover:text-primary"><i class="ri-eye-line"></i></a><a href="#" class="text-gray-500 hover:text-primary"><i class="ri-download-2-line"></i></a></td>
+                        </tr>
+                        <tr>
+                            <td class="py-3 px-4 flex items-center"><span class="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center mr-2"><i class="ri-car-line text-green-400"></i></span> <span>
+                                <span class="font-medium text-gray-800">Toyota Prius</span><br><span class="text-xs text-gray-400">ABC-1234</span></span></td>
+                            <td class="py-3 px-4"><i class="ri-file-2-line mr-1"></i>Registration</td>
+                            <td class="py-3 px-4">Mar 10, 2025</td>
+                            <td class="py-3 px-4">Mar 10, 2026</td>
+                            <td class="py-3 px-4"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs">Valid</span></td>
+                            <td class="py-3 px-4 flex space-x-2"><a href="#" class="text-gray-500 hover:text-primary"><i class="ri-eye-line"></i></a><a href="#" class="text-gray-500 hover:text-primary"><i class="ri-download-2-line"></i></a></td>
+                        </tr>
+                        <tr>
+                            <td class="py-3 px-4 flex items-center"><span class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center mr-2"><i class="ri-car-line text-blue-400"></i></span> <span>
+                                <span class="font-medium text-gray-800">Tesla Model 3</span><br><span class="text-xs text-gray-400">XYZ-5678</span></span></td>
+                            <td class="py-3 px-4"><i class="ri-file-2-line mr-1"></i>Insurance</td>
+                            <td class="py-3 px-4">Feb 22, 2025</td>
+                            <td class="py-3 px-4">Feb 22, 2026</td>
+                            <td class="py-3 px-4"><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs">Valid</span></td>
+                            <td class="py-3 px-4 flex space-x-2"><a href="#" class="text-gray-500 hover:text-primary"><i class="ri-eye-line"></i></a><a href="#" class="text-gray-500 hover:text-primary"><i class="ri-download-2-line"></i></a></td>
+                        </tr>
+                        <tr>
+                            <td class="py-3 px-4 flex items-center"><span class="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center mr-2"><i class="ri-car-line text-gray-400"></i></span> <span>
+                                <span class="font-medium text-gray-800">Honda CR-V</span><br><span class="text-xs text-gray-400">DEF-9012</span></span></td>
+                            <td class="py-3 px-4"><i class="ri-file-2-line mr-1"></i>Registration</td>
+                            <td class="py-3 px-4">Dec 05, 2024</td>
+                            <td class="py-3 px-4">May 05, 2025</td>
+                            <td class="py-3 px-4"><span class="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-xs">Expiring Soon</span></td>
+                            <td class="py-3 px-4 flex space-x-2"><a href="#" class="text-gray-500 hover:text-primary"><i class="ri-eye-line"></i></a><a href="#" class="text-gray-500 hover:text-primary"><i class="ri-download-2-line"></i></a></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}

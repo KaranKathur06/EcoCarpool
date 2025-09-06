@@ -3,34 +3,132 @@ from rides.models import Booking
 from django.conf import settings
 from django.utils import timezone
 from django.contrib.auth import get_user_model
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.exceptions import ValidationError
 from decimal import Decimal
 from users.models import CustomUser
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+import uuid
+import secrets
+from datetime import datetime
 
 User = get_user_model()
 
+def generate_transaction_id():
+    """Generate a unique transaction ID"""
+    timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+    random_part = secrets.token_hex(6).upper()
+    return f"TXN{timestamp}{random_part}"
+
 class Payment(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('processing', 'Processing'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+        ('cancelled', 'Cancelled'),
+        ('refunded', 'Refunded'),
+        ('partially_refunded', 'Partially Refunded'),
+    ]
+    
+    PAYMENT_TYPE_CHOICES = [
+        ('booking', 'Booking Payment'),
+        ('tip', 'Tip'),
+        ('refund', 'Refund'),
+        ('penalty', 'Penalty'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name='payments')
     payer = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='payments_made')
     receiver = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='payments_received')
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    status = models.CharField(max_length=20, default='pending', choices=[
-        ('pending', 'Pending'),
-        ('completed', 'Completed'),
-        ('failed', 'Failed'),
-        ('refunded', 'Refunded')
-    ])
-    transaction_id = models.CharField(max_length=100, unique=True, null=True, blank=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
+    platform_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    processing_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    net_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    payment_type = models.CharField(max_length=20, choices=PAYMENT_TYPE_CHOICES, default='booking')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    payment_method = models.CharField(max_length=50, blank=True)
+    transaction_id = models.CharField(max_length=100, unique=True, null=True, blank=True, default=None)
+    gateway_transaction_id = models.CharField(max_length=200, blank=True)
+    gateway_response = models.JSONField(default=dict, blank=True)
+    failure_reason = models.TextField(blank=True)
+    refund_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    refund_reason = models.TextField(blank=True)
+    processed_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'payments_payment'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status', 'created_at']),
+            models.Index(fields=['payer', 'status']),
+            models.Index(fields=['transaction_id']),
+        ]
 
     def __str__(self):
-        return f"Payment of ${self.amount} from {self.payer} to {self.receiver}"
+        return f"Payment {self.transaction_id} - ₹{self.amount} from {self.payer.username}"
+
+    def save(self, *args, **kwargs):
+        if not self.transaction_id:
+            self.transaction_id = generate_transaction_id()
+        
+        # Calculate net amount
+        self.net_amount = self.amount - self.platform_fee - self.processing_fee
+        
+        super().save(*args, **kwargs)
+
+    def process_payment(self):
+        """Process the payment"""
+        if self.status != 'pending':
+            raise ValidationError("Payment can only be processed from pending status.")
+        
+        self.status = 'processing'
+        self.save()
+        
+        # Here you would integrate with payment gateway
+        # For now, we'll simulate success
+        self.status = 'completed'
+        self.processed_at = timezone.now()
+        self.save()
+        
+        return True
+
+    def refund_payment(self, amount=None, reason=""):
+        """Refund the payment"""
+        if self.status != 'completed':
+            raise ValidationError("Only completed payments can be refunded.")
+        
+        refund_amount = amount or self.amount
+        if refund_amount > self.amount:
+            raise ValidationError("Refund amount cannot exceed payment amount.")
+        
+        self.refund_amount = refund_amount
+        self.refund_reason = reason
+        
+        if refund_amount == self.amount:
+            self.status = 'refunded'
+        else:
+            self.status = 'partially_refunded'
+        
+        self.save()
+        return True
+
+    def get_status_display_class(self):
+        """Get CSS class for status display"""
+        status_classes = {
+            'pending': 'badge-warning',
+            'processing': 'badge-info',
+            'completed': 'badge-success',
+            'failed': 'badge-danger',
+            'cancelled': 'badge-secondary',
+            'refunded': 'badge-dark',
+            'partially_refunded': 'badge-warning',
+        }
+        return status_classes.get(self.status, 'badge-secondary')
 
 class UserPayment(models.Model):
     STATUS_CHOICES = [

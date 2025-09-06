@@ -1,2 +1,7 @@
 username: ADMIN 
 Password: Admin@123
+
+
+/admin:
+username : admin
+Password : admin123

@@ -15,6 +15,7 @@ from django.views.decorators.http import require_GET
 from django.core.exceptions import ValidationError
 import json
 from django.db.models import Q
+from collections import defaultdict
 
 class VehicleListView(LoginRequiredMixin, ListView):
     model = Vehicle
@@ -167,7 +168,7 @@ def get_vehicle_types(request):
 
 @login_required
 def vehicle_list(request):
-    vehicles = Vehicle.objects.select_related('model', 'model__company', 'model__type').all()
+    vehicles = Vehicle.objects.filter(owner=request.user).select_related('model', 'model__company', 'model__type')
     return render(request, 'vehicles/vehicle_list.html', {'vehicles': vehicles})
 
 @login_required
@@ -182,19 +183,25 @@ def vehicle_detail(request, pk):
 @login_required
 def add_vehicle(request):
     if request.method == 'POST':
-        form = VehicleForm(request.POST)
+        form = VehicleForm(request.POST, request.FILES)
         if form.is_valid():
             vehicle = form.save(commit=False)
             vehicle.owner = request.user
             vehicle.save()
-            return redirect('vehicle_list')
+            messages.success(request, 'Vehicle added successfully!')
+            return redirect('vehicles:vehicle-list')
     else:
         form = VehicleForm()
     
-    vehicle_types = VehicleType.objects.all()
+    vehicle_types = VehicleType.objects.all().order_by('category', 'type_name')
+    grouped_types = defaultdict(list)
+    for vt in vehicle_types:
+        grouped_types[vt.category].append(vt)
+    print('DEBUG vehicle_types_grouped:', grouped_types)  # Debug print
     return render(request, 'vehicles/vehicle_form.html', {
         'form': form,
-        'vehicle_types': vehicle_types
+        'vehicle_types_grouped': grouped_types,
+        'edit_mode': False
     })
 
 @login_required
@@ -204,14 +211,18 @@ def edit_vehicle(request, pk):
         form = VehicleForm(request.POST, instance=vehicle)
         if form.is_valid():
             form.save()
-            return redirect('vehicle_list')
+            messages.success(request, 'Vehicle updated successfully!')
+            return redirect('vehicles:vehicle-list')
     else:
         form = VehicleForm(instance=vehicle)
     
-    vehicle_types = VehicleType.objects.all()
+    vehicle_types = VehicleType.objects.all().order_by('category', 'type_name')
+    grouped_types = defaultdict(list)
+    for vt in vehicle_types:
+        grouped_types[vt.category].append(vt)
     return render(request, 'vehicles/vehicle_form.html', {
         'form': form,
-        'vehicle_types': vehicle_types,
+        'vehicle_types_grouped': grouped_types,
         'edit_mode': True
     })
 
@@ -243,36 +254,45 @@ def add_vehicle_document(request, vehicle_pk):
         'vehicle': vehicle
     })
 
+@require_GET
 def get_companies_by_type(request):
     vehicle_type_id = request.GET.get('type_id')
+    print('DEBUG: get_companies_by_type - vehicle_type_id:', vehicle_type_id)  # Debug print
     if not vehicle_type_id:
+        print('DEBUG: get_companies_by_type - No vehicle_type_id provided')
         return JsonResponse({'error': 'Vehicle type is required'}, status=400)
-    
     try:
-        # Get unique companies that have models of the selected type
+        # Modified query to find companies with *any* model of the given type
         companies = VehicleCompany.objects.filter(
-            vehiclemodel__type_id=vehicle_type_id,
-            vehiclemodel__is_active=True
-        ).distinct().values('id', 'company_name', 'country_of_origin')
-        
+            models__type_id=vehicle_type_id
+            # Removed models__is_active=True filter here
+        ).distinct().values('id', 'company_name', 'country_of_origin').order_by('company_name') # Added ordering for consistent results
+        print('DEBUG: get_companies_by_type - companies found:', list(companies))  # Debug print
         return JsonResponse(list(companies), safe=False)
     except Exception as e:
+        print('DEBUG: get_companies_by_type - error:', str(e))  # Debug print
         return JsonResponse({'error': str(e)}, status=500)
 
+@require_GET
 def get_models_by_company(request):
     company_id = request.GET.get('company_id')
     vehicle_type_id = request.GET.get('type_id')
+    print('DEBUG: get_models_by_company - company_id:', company_id, 'vehicle_type_id:', vehicle_type_id)
     
     if not company_id or not vehicle_type_id:
+        print('DEBUG: get_models_by_company - Missing company_id or vehicle_type_id')
         return JsonResponse({'error': 'Both company and vehicle type are required'}, status=400)
     
     try:
+        # This query remains the same, filtering for active models of the selected company and type
         models = VehicleModel.objects.filter(
             company_id=company_id,
             type_id=vehicle_type_id,
             is_active=True
-        ).values('id', 'model_name', 'year_from', 'year_to', 'base_price')
+        ).values('id', 'model_name', 'year_from', 'year_to', 'base_price').order_by('model_name') # Added ordering
         
+        print('DEBUG: get_models_by_company - models found:', list(models)) # Debug print
         return JsonResponse(list(models), safe=False)
     except Exception as e:
+        print('DEBUG: get_models_by_company - error:', str(e)) # Debug print
         return JsonResponse({'error': str(e)}, status=500)

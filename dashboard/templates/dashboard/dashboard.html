@@ -1,403 +1,453 @@
-{% extends 'base.html' %}
 {% load static %}
-
-{% block extra_css %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eco-Carpool Dashboard</title>
+<script src="https://cdn.tailwindcss.com/3.4.16"></script>
+<script>tailwind.config={theme:{extend:{colors:{primary:'#10b981',secondary:'#3b82f6'},borderRadius:{'none':'0px','sm':'4px',DEFAULT:'8px','md':'12px','lg':'16px','xl':'20px','2xl':'24px','3xl':'32px','full':'9999px','button':'8px'}}}}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
 <style>
-    .dashboard-container {
-        padding: 2rem;
-    }
-
-    .welcome-section {
-        margin-bottom: 2rem;
-    }
-
-    .welcome-section h1 {
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: #2d3748;
-        margin-bottom: 0.5rem;
-    }
-
-    .welcome-section p {
-        color: #718096;
-        font-size: 0.875rem;
-    }
-
-    .stats-grid-top {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 1.5rem;
-        margin-bottom: 2rem;
-    }
-
-    .stats-grid-secondary {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 1.5rem;
-        margin-bottom: 2rem;
-    }
-
-    .stat-card {
-        background: white;
-        border-radius: 1rem;
-        padding: 1.5rem;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        transition: transform 0.2s;
-    }
-
-    .stat-card:hover {
-        transform: translateY(-2px);
-    }
-
-    .stat-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 1rem;
-    }
-
-    .stat-icon {
-        width: 40px;
-        height: 40px;
-        background: rgba(66, 153, 225, 0.1);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #4299e1;
-    }
-
-    .stat-label {
-        font-size: 0.875rem;
-        color: #718096;
-        margin-bottom: 0.25rem;
-    }
-
-    .stat-value {
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: #2d3748;
-    }
-
-    .stat-change {
-        font-size: 0.75rem;
-        color: #48bb78;
-        display: flex;
-        align-items: center;
-        gap: 0.25rem;
-    }
-
-    .stat-change.negative {
-        color: #f56565;
-    }
-
-    .chart-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 1.5rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .chart-container {
-        background: white;
-        border-radius: 1rem;
-        padding: 1.5rem;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-    }
-
-    .chart-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1rem;
-    }
-
-    .chart-title {
-        font-size: 1rem;
-        font-weight: 600;
-        color: #2d3748;
-    }
-
-    .chart-period {
-        display: flex;
-        gap: 0.5rem;
-    }
-
-    .period-btn {
-        padding: 0.25rem 0.75rem;
-        border-radius: 0.5rem;
-        font-size: 0.75rem;
-        background: #f7fafc;
-        color: #718096;
-        border: none;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    .period-btn.active {
-        background: #4299e1;
-        color: white;
-    }
-
-    .chart-content {
-        height: 300px;
-        position: relative;
-    }
-
-    @media (max-width: 1200px) {
-        .stats-grid-top {
-            grid-template-columns: repeat(2, 1fr);
-        }
-        .stats-grid-secondary {
-            grid-template-columns: repeat(2, 1fr);
-        }
-        .chart-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    @media (max-width: 768px) {
-        .stats-grid-top, .stats-grid-secondary {
-            grid-template-columns: 1fr;
-        }
+:where([class^="ri-"])::before { content: "\f3c2"; }
+body {
+font-family: 'Inter', sans-serif;
+background-color: #f9fafb;
+}
+.custom-scrollbar::-webkit-scrollbar {
+width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+background-color: rgba(156, 163, 175, 0.5);
+border-radius: 20px;
+}
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+-webkit-appearance: none;
+margin: 0;
+}
+.toggle-checkbox:checked {
+right: 0;
+border-color: #10b981;
+}
+.toggle-checkbox:checked + .toggle-label {
+background-color: #10b981;
     }
 </style>
-{% endblock %}
-
-{% block content %}
-<div class="dashboard-container">
-    <!-- Welcome Section -->
-    <div class="welcome-section">
-        <h1>Welcome back, {{ user.get_full_name|default:user.username }}!</h1>
-        <p>Here's what's happening with your carpooling activities.</p>
+</head>
+<body class="flex h-screen overflow-hidden">
+<!-- Sidebar -->
+{% include 'includes/sidebar.html' %}
+<!-- Main Content -->
+<div class="flex-1 flex flex-col h-full overflow-hidden bg-gray-50">
+  <!-- Top Header Bar (Falcon style) -->
+  <header class="bg-white border-b border-gray-100 shadow-sm flex items-center justify-between px-8 py-4">
+    <div class="flex items-center space-x-4">
+      <h1 class="text-2xl font-bold text-gray-800">Dashboard</h1>
+      <span class="text-sm text-gray-400">EcoCarpool</span>
     </div>
-
-    <!-- Top Stats -->
-    <div class="stats-grid-top">
-        <div class="stat-card">
-            <div class="stat-header">
-                <div class="stat-icon">
-                    <i class="fas fa-users"></i>
-                </div>
-            </div>
-            <div class="stat-label">Total Users</div>
-            <div class="stat-value">{{ total_users|default:"0" }}</div>
-            <div class="stat-change">
-                <i class="fas fa-arrow-up"></i>
-                <span>12% from last month</span>
-            </div>
+    <div class="flex items-center space-x-4">
+      <button class="relative w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100">
+        <i class="ri-notification-3-line text-xl text-gray-500"></i>
+        <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+      </button>
+      <div class="flex items-center space-x-2">
+        <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-semibold">
+          {{ user.get_initials|default:user.username|slice:":2"|upper }}
         </div>
-
-        <div class="stat-card">
-            <div class="stat-header">
-                <div class="stat-icon">
-                    <i class="fas fa-route"></i>
-                </div>
-            </div>
-            <div class="stat-label">Total Rides</div>
-            <div class="stat-value">{{ total_rides|default:"0" }}</div>
-            <div class="stat-change">
-                <i class="fas fa-arrow-up"></i>
-                <span>8% from last week</span>
-            </div>
+        <div class="hidden md:block">
+          <div class="text-sm font-medium text-gray-800">{{ user.get_full_name|default:user.username|title }}</div>
+          <div class="text-xs text-gray-500">Driver</div>
         </div>
-
-        <div class="stat-card">
-            <div class="stat-header">
-                <div class="stat-icon">
-                    <i class="fas fa-dollar-sign"></i>
-                </div>
-            </div>
-            <div class="stat-label">Total Earnings</div>
-            <div class="stat-value">${{ total_earnings|default:"0"|floatformat:2 }}</div>
-            <div class="stat-change">
-                <i class="fas fa-arrow-up"></i>
-                <span>15% from last month</span>
-            </div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-header">
-                <div class="stat-icon">
-                    <i class="fas fa-exchange-alt"></i>
-                </div>
-            </div>
-            <div class="stat-label">Transaction Fees</div>
-            <div class="stat-value">${{ transaction_fees|default:"0"|floatformat:2 }}</div>
-            <div class="stat-change">
-                <i class="fas fa-arrow-up"></i>
-                <span>5% from last month</span>
-            </div>
-        </div>
+        <i class="ri-arrow-down-s-line text-gray-400"></i>
+      </div>
     </div>
-
-    <!-- Secondary Stats -->
-    <div class="stats-grid-secondary">
-        <div class="stat-card">
-            <div class="stat-header">
-                <div class="stat-icon">
-                    <i class="fas fa-user-friends"></i>
-                </div>
+  </header>
+  <!-- Main Content -->
+  <main class="flex-1 overflow-y-auto p-8 bg-gray-50">
+    <!-- Stat Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div class="bg-white rounded-2xl shadow p-6 flex flex-col items-start border border-gray-100">
+        <div class="flex items-center mb-4">
+          <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+            <i class="ri-route-line text-primary text-2xl"></i>
+          </div>
+          <div class="ml-4">
+            <h3 class="text-base font-medium text-gray-500">Total Rides</h3>
+            <div class="flex items-end">
+              <span class="text-3xl font-bold text-gray-800">{{ total_rides }}</span>
+              <span class="ml-2 text-xs font-medium text-green-500">+12.5%</span>
             </div>
-            <div class="stat-label">Total Passengers</div>
-            <div class="stat-value">{{ total_passengers|default:"0" }}</div>
-            <div class="stat-change">
-                <i class="fas fa-arrow-up"></i>
-                <span>Today: {{ today_passengers|default:"0" }}</span>
-            </div>
+          </div>
         </div>
-
-        <div class="stat-card">
-            <div class="stat-header">
-                <div class="stat-icon">
-                    <i class="fas fa-car"></i>
-                </div>
-            </div>
-            <div class="stat-label">Your Rides</div>
-            <div class="stat-value">{{ your_rides|default:"0" }}</div>
-            <div class="stat-change">
-                <i class="fas fa-arrow-up"></i>
-                <span>Upcoming: {{ upcoming_rides|default:"0" }}</span>
-            </div>
+        <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden mb-2">
+          <div class="bg-primary h-full rounded-full" style="width: 75%"></div>
         </div>
-
-        <div class="stat-card">
-            <div class="stat-header">
-                <div class="stat-icon">
-                    <i class="fas fa-wallet"></i>
-                </div>
-            </div>
-            <div class="stat-label">Your Earnings</div>
-            <div class="stat-value">${{ your_earnings|default:"0"|floatformat:2 }}</div>
-            <div class="stat-change">
-                <i class="fas fa-arrow-up"></i>
-                <span>Today: ${{ today_earnings|default:"0"|floatformat:2 }}</span>
-            </div>
+        <div class="flex justify-between w-full text-xs text-gray-500">
+          <span>Monthly goal: 300</span>
+          <span>75% completed</span>
         </div>
+      </div>
+      <div class="bg-white rounded-2xl shadow p-6 flex flex-col items-start border border-gray-100">
+        <div class="flex items-center mb-4">
+          <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+            <i class="ri-wallet-3-line text-secondary text-2xl"></i>
+          </div>
+          <div class="ml-4">
+            <h3 class="text-base font-medium text-gray-500">Earnings</h3>
+            <div class="flex items-end">
+              <span class="text-3xl font-bold text-gray-800">₹{{ total_earnings }}</span>
+              <span class="ml-2 text-xs font-medium text-green-500">+8.3%</span>
+            </div>
+          </div>
+        </div>
+        <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden mb-2">
+          <div class="bg-secondary h-full rounded-full" style="width: 62%"></div>
+        </div>
+        <div class="flex justify-between w-full text-xs text-gray-500">
+          <span>Monthly goal: ₹3,000</span>
+          <span>62% completed</span>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl shadow p-6 flex flex-col items-start border border-gray-100">
+        <div class="flex items-center mb-4">
+          <div class="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center">
+            <i class="ri-star-line text-yellow-500 text-2xl"></i>
+          </div>
+          <div class="ml-4">
+            <h3 class="text-base font-medium text-gray-500">Rating</h3>
+            <div class="flex items-end">
+              <span class="text-3xl font-bold text-gray-800">{{ average_rating }}</span>
+              <span class="ml-2 text-xs font-medium text-green-500">+0.3</span>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center mb-2">
+          <div class="flex">
+            <i class="ri-star-fill text-yellow-400"></i>
+            <i class="ri-star-fill text-yellow-400"></i>
+            <i class="ri-star-fill text-yellow-400"></i>
+            <i class="ri-star-fill text-yellow-400"></i>
+            <i class="ri-star-fill text-yellow-400"></i>
+          </div>
+          <span class="ml-2 text-sm text-gray-500">from 189 reviews</span>
+        </div>
+        <div class="text-xs text-gray-500">
+          <span>Last review: "{{ last_review_text|default:'Great driver, very punctual!' }}"</span>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl shadow p-6 flex flex-col items-start border border-gray-100">
+        <div class="flex items-center mb-4">
+          <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+            <i class="ri-gas-station-line text-red-500 text-2xl"></i>
+          </div>
+          <div class="ml-4">
+            <h3 class="text-base font-medium text-gray-500">CO₂ Saved</h3>
+            <div class="flex items-end">
+              <span class="text-3xl font-bold text-gray-800">{{ co2_saved }} kg</span>
+              <span class="ml-2 text-xs font-medium text-green-500">+15.2%</span>
+            </div>
+          </div>
+        </div>
+        <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden mb-2">
+          <div class="bg-red-500 h-full rounded-full" style="width: 87%"></div>
+        </div>
+        <div class="flex justify-between w-full text-xs text-gray-500">
+          <span>Monthly goal: 1,000 kg</span>
+          <span>87% completed</span>
+        </div>
+      </div>
     </div>
-
-    <!-- Quick Actions -->
-    <div class="mt-4">
-        <a href="{% url 'rides:ride-create' %}" class="btn btn-primary">
-            <i class="fas fa-plus me-2"></i>Create New Ride
-        </a>
-        <a href="{% url 'rides:my-rides' %}" class="btn btn-secondary ms-2">
-            <i class="fas fa-list me-2"></i>View My Rides
-        </a>
-    </div>
-
-    <!-- Charts -->
-    <div class="chart-grid mt-4">
-        <div class="chart-container">
-            <div class="chart-header">
-                <h5 class="chart-title">Earnings Overview</h5>
-                <div class="chart-period">
-                    <button class="period-btn active">Week</button>
-                    <button class="period-btn">Month</button>
-                    <button class="period-btn">Year</button>
-                </div>
-            </div>
-            <div class="chart-content">
-                <canvas id="earningsChart"></canvas>
-            </div>
+    <!-- Main Grid: Charts & Activity -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <!-- Earnings Chart -->
+      <div class="bg-white rounded-2xl shadow p-6 border border-gray-100 lg:col-span-2 flex flex-col">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold text-gray-800">Earnings Overview</h3>
+          <div class="flex space-x-2">
+            <button class="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full hover:bg-gray-200">Weekly</button>
+            <button class="px-3 py-1 text-xs font-medium text-white bg-primary rounded-full hover:bg-primary/90">Monthly</button>
+            <button class="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full hover:bg-gray-200">Yearly</button>
+          </div>
         </div>
-
-        <div class="chart-container">
-            <div class="chart-header">
-                <h5 class="chart-title">Ride Activity</h5>
-                <div class="chart-period">
-                    <button class="period-btn active">Week</button>
-                    <button class="period-btn">Month</button>
-                    <button class="period-btn">Year</button>
-                </div>
-            </div>
-            <div class="chart-content">
-                <canvas id="ridesChart"></canvas>
-            </div>
+        <div id="earnings-chart" class="w-full h-72"></div>
+      </div>
+      <!-- Upcoming Rides -->
+      <div class="bg-white rounded-2xl shadow p-6 border border-gray-100 flex flex-col">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold text-gray-800">Upcoming Rides</h3>
+          <button class="text-primary hover:text-primary/80 text-sm font-medium">View All</button>
         </div>
+        <div class="space-y-4">
+          {% for ride in upcoming_rides %}
+          <div class="flex items-start p-3 bg-green-50 rounded-lg border border-green-100">
+            <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+              <i class="ri-time-line text-primary"></i>
+            </div>
+            <div class="ml-3 flex-1">
+              <div class="flex justify-between">
+                <h4 class="text-sm font-medium text-gray-800">{{ ride.title }}</h4>
+                <span class="text-xs font-medium text-primary">{{ ride.date_label }}</span>
+              </div>
+              <p class="text-xs text-gray-500 mt-1">{{ ride.time }}</p>
+              <div class="flex items-center mt-2">
+                <div class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                  <span class="text-xs font-medium text-blue-600">{{ ride.passenger_initials }}</span>
+                </div>
+                <span class="ml-2 text-xs text-gray-600">{{ ride.passenger }}</span>
+                <div class="ml-auto flex items-center">
+                  <span class="text-xs font-medium text-gray-600">₹{{ ride.price }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% empty %}
+          <div class="flex items-center justify-center text-gray-400 text-sm">No upcoming rides.</div>
+          {% endfor %}
+        </div>
+      </div>
     </div>
+    <!-- Second Grid: Vehicle, Distribution, Reviews -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <!-- Vehicle Status -->
+      <div class="bg-white rounded-2xl shadow p-6 border border-gray-100 flex flex-col">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold text-gray-800">Vehicle Status</h3>
+          <button class="text-primary hover:text-primary/80 text-sm font-medium">Manage</button>
+        </div>
+        <div class="bg-gray-50 rounded-lg p-4 mb-4 border border-gray-100">
+          <div class="flex items-center">
+            <div class="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+              <i class="ri-car-line text-secondary text-2xl"></i>
+            </div>
+            <div class="ml-4 flex-1">
+              <h4 class="text-sm font-medium text-gray-800">{{ vehicle.name }}</h4>
+              <p class="text-xs text-gray-500">{{ vehicle.type }} • {{ vehicle.plate }}</p>
+            </div>
+            <div class="ml-2">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>
+            </div>
+          </div>
+          <div class="mt-4 grid grid-cols-2 gap-3">
+            <div class="bg-white rounded-md p-3 border border-gray-100">
+              <div class="text-xs text-gray-500">Fuel Level</div>
+              <div class="mt-1 flex items-center">
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                  <div class="bg-green-500 h-2 rounded-full" data-width="{{ vehicle.fuel_level }}"></div>
+                </div>
+                <span class="ml-2 text-xs font-medium text-gray-700">{{ vehicle.fuel_level }}%</span>
+              </div>
+            </div>
+            <div class="bg-white rounded-md p-3 border border-gray-100">
+              <div class="text-xs text-gray-500">Maintenance</div>
+              <div class="mt-1 flex items-center">
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                  <div class="bg-yellow-500 h-2 rounded-full" data-width="{{ vehicle.maintenance }}"></div>
+                </div>
+                <span class="ml-2 text-xs font-medium text-gray-700">{{ vehicle.maintenance }}%</span>
+              </div>
+            </div>
+          </div>
+          <div class="mt-3 text-xs text-gray-500">
+            <span>Next service in {{ vehicle.next_service }}</span>
+          </div>
+        </div>
+        <button class="w-full py-2 bg-gray-50 border border-gray-200 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100"> <i class="ri-add-line mr-2"></i> Add Another Vehicle </button>
+      </div>
+      <!-- Ride Distribution -->
+      <div class="bg-white rounded-2xl shadow p-6 border border-gray-100 flex flex-col">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold text-gray-800">Ride Distribution</h3>
+          <div class="relative">
+            <button class="flex items-center text-sm text-gray-500 hover:text-gray-700"> This Month <i class="ri-arrow-down-s-line ml-1"></i> </button>
+          </div>
+        </div>
+        <div id="ride-distribution-chart" class="w-full h-64"></div>
+      </div>
+      <!-- Recent Reviews -->
+      <div class="bg-white rounded-2xl shadow p-6 border border-gray-100 flex flex-col">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold text-gray-800">Recent Reviews</h3>
+          <button class="text-primary hover:text-primary/80 text-sm font-medium">View All</button>
+        </div>
+        <div class="space-y-4">
+          {% for review in recent_reviews %}
+          <div class="p-3 bg-gray-50 rounded-lg border border-gray-100">
+            <div class="flex items-start">
+              <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                <span class="text-xs font-medium text-indigo-600">{{ review.initials }}</span>
+              </div>
+              <div class="ml-3 flex-1">
+                <div class="flex justify-between">
+                  <h4 class="text-sm font-medium text-gray-800">{{ review.reviewer }}</h4>
+                  <span class="text-xs text-gray-500">{{ review.date }}</span>
+                </div>
+                <div class="flex text-yellow-400 mt-1">
+                  {% for i in "12345"|make_list %}
+                    {% if forloop.counter <= review.stars %}
+                      <i class="ri-star-fill text-xs"></i>
+                    {% else %}
+                      <i class="ri-star-line text-xs"></i>
+                    {% endif %}
+                  {% endfor %}
+                </div>
+                <p class="mt-1 text-xs text-gray-600">{{ review.text }}</p>
+              </div>
+            </div>
+          </div>
+          {% empty %}
+          <div class="flex items-center justify-center text-gray-400 text-sm">No reviews yet.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    <!-- Full-width: Popular Routes & Recent Activity -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <!-- Popular Routes -->
+      <div class="bg-white rounded-2xl shadow p-6 border border-gray-100 flex flex-col mb-8 lg:mb-0">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold text-gray-800">Popular Routes</h3>
+          <div class="flex space-x-2">
+            <button class="px-3 py-1 text-xs font-medium text-white bg-primary rounded-full hover:bg-primary/90">This Week</button>
+            <button class="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full hover:bg-gray-200">This Month</button>
+            <button class="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full hover:bg-gray-200">All Time</button>
+          </div>
+        </div>
+        <div class="relative w-full h-72 rounded-lg overflow-hidden">
+          <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('https://public.readdy.ai/gen_page/map_placeholder_1280x720.png');"></div>
+          <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+          <div class="absolute bottom-4 left-4 right-4 flex space-x-4 overflow-x-auto pb-2">
+            {% for route in popular_routes %}
+            <div class="bg-white rounded-lg shadow-md p-3 min-w-[240px] border border-gray-100">
+              <div class="flex justify-between items-center mb-1">
+                <h4 class="text-sm font-medium text-gray-800">{{ route.title }}</h4>
+                <span class="text-xs font-medium text-primary">{{ route.rides }} rides</span>
+              </div>
+              <div class="flex items-center text-xs text-gray-500 mb-1">
+                <i class="ri-map-pin-line mr-1"></i>
+                <span>{{ route.distance }} • {{ route.duration }}</span>
+              </div>
+              <div class="flex items-center text-xs text-gray-700">
+                <span class="font-semibold">₹{{ route.avg_price }} avg</span>
+              </div>
+            </div>
+            {% empty %}
+            <div class="flex items-center justify-center text-gray-400 text-sm">No popular routes.</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      <!-- Recent Activity -->
+      <div class="bg-white rounded-2xl shadow p-6 border border-gray-100 flex flex-col">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold text-gray-800">Recent Activity</h3>
+          <a href="#" class="text-primary hover:text-primary/80 text-sm font-medium">View All</a>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead>
+              <tr>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Passenger</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Route</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Distance</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Earnings</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              {% for activity in recent_activity %}
+              <tr>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ activity.date }}</td>
+                <td class="px-4 py-3 whitespace-nowrap">
+                  <div class="flex items-center">
+                    <div class="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center">
+                      <span class="text-xs font-medium text-blue-600">{{ activity.passenger_initials }}</span>
+                    </div>
+                    <span class="ml-2 text-sm text-gray-800">{{ activity.passenger }}</span>
+                  </div>
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ activity.route }}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ activity.distance }}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-800">₹{{ activity.earnings }}</td>
+                <td class="px-4 py-3 whitespace-nowrap">
+                  {% if activity.status == 'Completed' %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Completed</span>
+                  {% elif activity.status == 'Disputed' %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Disputed</span>
+                  {% else %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">{{ activity.status }}</span>
+                  {% endif %}
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                  <a href="#" class="text-primary hover:text-primary/80">Details</a>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="7" class="text-center text-gray-400 py-6">No recent activity.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Chart data from Django template
-    const chartData = {
-        labels: JSON.parse('{{ chart_labels|safe|escapejs }}'),
-        earnings: JSON.parse('{{ earnings_data|safe|escapejs }}'),
-        rides: JSON.parse('{{ rides_data|safe|escapejs }}')
-    };
-
-    // Earnings Chart
-    const earningsCtx = document.getElementById('earningsChart').getContext('2d');
-    new Chart(earningsCtx, {
+document.querySelectorAll('[data-width]').forEach(el => {
+    el.style.width = el.dataset.width + '%';
+});
+// Earnings Overview Chart (ECharts)
+const earningsChartData = JSON.parse('{{ earnings_chart_json|escapejs }}');
+const earningsChart = echarts.init(document.getElementById('earnings-chart'));
+earningsChart.setOption({
+    tooltip: { trigger: 'axis' },
+    xAxis: { type: 'category', data: earningsChartData.labels },
+    yAxis: { type: 'value' },
+    series: [{
+        data: earningsChartData.data,
         type: 'line',
-        data: {
-            labels: chartData.labels,
-            datasets: [{
-                label: 'Earnings',
-                data: chartData.earnings,
-                borderColor: '#4299e1',
-                backgroundColor: 'rgba(66, 153, 225, 0.1)',
-                tension: 0.4,
-                fill: true
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return '$' + value;
-                        }
-                    }
-                }
+        smooth: true,
+        areaStyle: {},
+        color: '#10b981'
+    }]
+});
+// Ride Distribution Pie Chart (ECharts)
+const rideDistributionData = JSON.parse('{{ ride_distribution_json|escapejs }}');
+const rideDistributionChart = echarts.init(document.getElementById('ride-distribution-chart'));
+rideDistributionChart.setOption({
+    tooltip: { trigger: 'item' },
+    legend: { orient: 'vertical', left: 'left' },
+    series: [{
+        name: 'Rides',
+        type: 'pie',
+        radius: '70%',
+        data: Object.entries(rideDistributionData).map(([status, value]) => ({
+            value: value,
+            name: status.charAt(0).toUpperCase() + status.slice(1)
+        })),
+        emphasis: {
+            itemStyle: {
+                shadowBlur: 10,
+                shadowOffsetX: 0,
+                shadowColor: 'rgba(0, 0, 0, 0.2)'
             }
         }
-    });
-
-    // Rides Chart
-    const ridesCtx = document.getElementById('ridesChart').getContext('2d');
-    new Chart(ridesCtx, {
-        type: 'bar',
-        data: {
-            labels: chartData.labels,
-            datasets: [{
-                label: 'Rides',
-                data: chartData.rides,
-                backgroundColor: '#48bb78',
-                borderColor: '#48bb78',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        stepSize: 1
-                    }
-                }
-            }
-        }
-    });
+    }]
 });
 </script>
-{% endblock %}
+</body>
+</html>

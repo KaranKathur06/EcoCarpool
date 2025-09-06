@@ -1,0 +1,73 @@
+{% load static %}
+
+<div class="sidebar">
+    <div class="sidebar-brand">
+        <a href="{% url 'dashboard:dashboard-home' %}">
+            <img src="{% static 'images/dashboard photos/MAIN 2.png' %}" alt="EcoCarpool Logo" class="carpool-image">
+            <h2 class="text-center text-white">ECOCARPOOL</h2>
+        </a>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="sidebar-nav">
+        <a href="{% url 'dashboard:dashboard-home' %}" class="sidebar-item {% if request.resolver_match.url_name == 'dashboard-home' %}active{% endif %}">
+            <i class="fas fa-chart-line"></i>
+            Dashboard
+        </a>
+
+        <!-- RIDES SECTION -->
+        <div class="sidebar-heading">RIDES</div>
+        
+        <a href="{% url 'rides:ride-create' %}" class="sidebar-item {% if 'create' in request.path %}active{% endif %}">
+            <i class="fas fa-plus-circle"></i>
+            Offer Ride
+        </a>
+        <a href="{% url 'rides:my-rides' %}" class="sidebar-item {% if 'my-rides' in request.path %}active{% endif %}">
+            <i class="fas fa-route"></i>
+            My Rides
+        </a>
+
+        <!-- VEHICLES SECTION -->
+        <div class="sidebar-heading">VEHICLES</div>
+        <a href="{% url 'vehicles:vehicle-list' %}" class="sidebar-item {% if 'vehicles' in request.path %}active{% endif %}">
+            <i class="fas fa-car"></i>
+            My Vehicles
+        </a>
+
+        <!-- PAYMENTS SECTION -->
+        <div class="sidebar-heading">PAYMENTS</div>
+        <a href="{% url 'dashboard:payment-history' %}" class="sidebar-item {% if 'payment-history' in request.path %}active{% endif %}">
+            <i class="fas fa-wallet"></i>
+            Wallet
+        </a>
+        <a href="{% url 'dashboard:payment-history' %}" class="sidebar-item {% if 'payment-history' in request.path %}active{% endif %}">
+            <i class="fas fa-history"></i>
+            Transaction History
+        </a>
+
+        <!-- ACCOUNT SECTION -->
+        <div class="sidebar-heading">ACCOUNT</div>
+        <a href="{% url 'users:profile' %}" class="sidebar-item {% if 'profile' in request.path %}active{% endif %}">
+            <i class="fas fa-user"></i>
+            Profile
+        </a>
+        <a href="{% url 'users:logout' %}" class="sidebar-item text-danger">
+            <i class="fas fa-sign-out-alt"></i>
+            Logout
+        </a>
+    </div>
+</div>
+
+<script>
+    // Add active class to current menu item
+    document.addEventListener('DOMContentLoaded', function() {
+        const currentPath = window.location.pathname;
+        const menuItems = document.querySelectorAll('.sidebar-item');
+        
+        menuItems.forEach(item => {
+            if (item.getAttribute('href') === currentPath) {
+                item.classList.add('active');
+            }
+        });
+    });
+</script>

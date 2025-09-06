@@ -12,6 +12,6 @@ urlpatterns = [
     path('<int:pk>/delete/', views.VehicleDeleteView.as_view(), name='vehicle-delete'),
     path('<int:vehicle_pk>/add-document/', views.add_document, name='add-document'),
     path('document/<int:pk>/delete/', views.delete_document, name='delete-document'),
-    path('api/companies/', views.get_companies_by_type, name='api_companies'),
-    path('api/models/', views.get_models_by_company, name='api_models'),
+    path('api/companies/', views.get_companies_by_type, name='get_companies_by_type'),
+    path('api/models/', views.get_models_by_company, name='get_models_by_company'),
 ]

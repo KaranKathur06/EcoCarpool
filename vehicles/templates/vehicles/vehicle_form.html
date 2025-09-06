@@ -1,224 +1,398 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load widget_tweaks %}
+{% load get_digit_range %}
 
 {% block title %}{{ title }} - EcoCarpool{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-md-8 offset-md-2">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h2 class="mb-0">{% if edit_mode %}Edit{% else %}Add New{% endif %} Vehicle</h2>
-                </div>
-                <div class="card-body">
-                    <form method="post" id="vehicleForm">
-                        {% csrf_token %}
-                        
-                        <!-- Vehicle Type -->
-                        <div class="form-group mb-3">
-                            <label for="vehicleType" class="form-label">Vehicle Type*</label>
-                            <select class="form-select" id="vehicleType" name="vehicle_type" required>
-                                <option value="">Select a type</option>
-                                {% for type in vehicle_types %}
-                                    <option value="{{ type.id }}" 
-                                            data-description="{{ type.description }}">
-                                        {{ type.type_name }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                            <small class="text-muted type-description"></small>
-                        </div>
-
-                        <!-- Vehicle Company -->
-                        <div class="form-group mb-3">
-                            <label for="vehicleCompany" class="form-label">Vehicle Company/Brand*</label>
-                            <select class="form-select" id="vehicleCompany" name="company" required disabled>
-                                <option value="">Select a company</option>
-                            </select>
-                            <small class="text-muted company-origin"></small>
-                        </div>
-
-                        <!-- Vehicle Model -->
-                        <div class="form-group mb-3">
-                            <label for="vehicleModel" class="form-label">Vehicle Model*</label>
-                            <select class="form-select" id="vehicleModel" name="model" required disabled>
-                                <option value="">Select a model</option>
-                            </select>
-                            <div class="model-details mt-2" style="display: none;">
-                                <p class="mb-1"><strong>Year:</strong> <span class="model-year"></span></p>
-                                <p class="mb-1"><strong>Base Price:</strong> <span class="model-price"></span></p>
-                            </div>
-                        </div>
-
-                        <!-- Vehicle Registration Number -->
-                        <div class="form-group mb-3">
-                            <label for="registrationNumber" class="form-label">Vehicle Registration Number*</label>
-                            <input type="text" class="form-control" id="registrationNumber" 
-                                   name="registration_number" required 
-                                   placeholder="Enter registration number">
-                        </div>
-
-                        <!-- Color -->
-                        <div class="form-group mb-3">
-                            <label for="color" class="form-label">Color*</label>
-                            <input type="text" class="form-control" id="color" 
-                                   name="color" required 
-                                   placeholder="e.g., Black, White, Silver">
-                        </div>
-
-                        <div class="text-end">
-                            <a href="{% url 'vehicles:vehicle-list' %}" class="btn btn-secondary">Cancel</a>
-                            <button type="submit" class="btn btn-primary">
-                                {% if edit_mode %}Update{% else %}Add{% endif %} Vehicle
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex flex-col items-center justify-center py-8">
+  <div class="w-full max-w-4xl bg-white shadow-2xl border border-gray-100 rounded-3xl overflow-hidden">
+    <div class="bg-gradient-to-r from-purple-600 to-pink-500 px-8 py-8">
+      <h2 class="text-3xl font-extrabold text-white tracking-tight">{% if edit_mode %}Edit{% else %}Add New{% endif %} Vehicle</h2>
     </div>
+    <div class="px-0 py-10">
+      <form method="post" id="vehicleForm" enctype="multipart/form-data" class="space-y-8">
+        {% csrf_token %}
+        <div class="px-8">
+          <label class="block text-base font-semibold mb-2 text-gray-700">Vehicle Image</label>
+          <div id="dropzone" class="flex flex-col items-center justify-center border-2 border-dashed border-green-400 rounded-2xl bg-green-50 py-8 px-4 cursor-pointer transition hover:bg-green-100">
+            <input type="file" id="vehiclePhotoInput" name="vehicle_photo" accept="image/*" class="hidden">
+            <div id="imagePreview" class="mb-4"></div>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-green-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+            <p class="text-gray-500 text-lg">Drag and drop an image here, or click to browse</p>
+            <p class="text-gray-400 text-sm mb-4">PNG, JPG or JPEG (max. 5MB)</p>
+            <button type="button" id="browseBtn" class="px-5 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 font-semibold hover:bg-gray-100 transition">Browse Files</button>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 px-8">
+          <div>
+            <label for="id_vehicle_type" class="block text-base font-semibold mb-1 text-gray-700">Vehicle Type <span class="text-red-500">*</span></label>
+            <select class="form-control w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary bg-gray-50 text-gray-700 appearance-none pr-10" id="id_vehicle_type" name="vehicle_type" required>
+              {% for group, options in form.fields.vehicle_type.choices %}
+                <optgroup label="{{ group }}">
+                  {% for value, label in options %}
+                    <option value="{{ value }}" {% if form.vehicle_type.value == value|stringformat:'s' %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </optgroup>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label for="vehicleCompany" class="block text-base font-semibold mb-1 text-gray-700">Company <span class="text-red-500">*</span></label>
+            <select class="form-control w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary bg-gray-50 text-gray-700 appearance-none pr-10" id="vehicleCompany" name="company" required>
+              <option value="">Select company</option>
+            </select>
+          </div>
+          <div>
+            <label for="vehicleModel" class="block text-base font-semibold mb-1 text-gray-700">Model <span class="text-red-500">*</span></label>
+            <select class="form-control w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary bg-gray-50 text-gray-700 appearance-none pr-10" id="vehicleModel" name="model" required>
+              <option value="">Select model</option>
+            </select>
+          </div>
+          <div>
+            <label for="year" class="block text-base font-semibold mb-1 text-gray-700">Year <span class="text-red-500">*</span></label>
+            <select class="form-control w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary bg-gray-50 text-gray-700 appearance-none pr-10" id="year" name="year" required>
+              <option value="">Select year</option>
+              {% with current_year=2025 %}
+                {% for y in current_year|get_digit_range:1900 %}
+                  <option value="{{ y }}">{{ y }}</option>
+                {% endfor %}
+              {% endwith %}
+            </select>
+          </div>
+          <div>
+            <label for="registrationNumber" class="block text-base font-semibold mb-1 text-gray-700">License Plate <span class="text-red-500">*</span></label>
+            <input type="text" class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary bg-gray-50 text-gray-700" id="registrationNumber" name="license_plate" required placeholder="E.G. ABC-1234">
+          </div>
+          <div>
+            <label for="seatingCapacity" class="block text-base font-semibold mb-1 text-gray-700">Seating Capacity <span class="text-red-500">*</span></label>
+            <select class="form-control w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary bg-gray-50 text-gray-700 appearance-none pr-10" id="seatingCapacity" name="seating_capacity" required>
+              <option value="">Select seats</option>
+              {% for i in 2|add:0|get_digit_range:11 %}
+                <option value="{{ i }}">{{ i }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label for="color" class="block text-base font-semibold mb-1 text-gray-700">Color <span class="text-red-500">*</span></label>
+            <select class="form-control w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary bg-gray-50 text-gray-700 appearance-none pr-10" id="color" name="color" required>
+              <option value="">Select color</option>
+              <option value="Black">Black</option>
+              <option value="White">White</option>
+              <option value="Silver">Silver</option>
+              <option value="Red">Red</option>
+              <option value="Blue">Blue</option>
+              <option value="Gray">Gray</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex items-center gap-8 mt-6 px-8">
+          <span class="block text-base font-semibold text-gray-700">Vehicle Status</span>
+          <label class="inline-flex items-center cursor-pointer">
+            <input type="radio" class="form-radio text-green-500" name="is_active" value="true" checked>
+            <span class="ml-2 text-gray-700">Active</span>
+          </label>
+          <label class="inline-flex items-center cursor-pointer">
+            <input type="radio" class="form-radio text-gray-400" name="is_active" value="false">
+            <span class="ml-2 text-gray-700">Inactive</span>
+          </label>
+        </div>
+        <div class="flex justify-end gap-4 pt-8 px-8">
+          <a href="{% url 'vehicles:vehicle-list' %}" class="px-6 py-2 rounded-xl bg-pink-500 text-white font-bold hover:bg-pink-600 transition shadow">Cancel</a>
+          <button type="submit" class="px-6 py-2 rounded-xl bg-primary text-white font-bold hover:bg-green-700 transition shadow">{% if edit_mode %}Update{% else %}Add{% endif %} Vehicle</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
-
-{% endblock %}
-
-{% block extra_js %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const vehicleTypeSelect = document.getElementById('vehicleType');
-    const companySelect = document.getElementById('vehicleCompany');
-    const modelSelect = document.getElementById('vehicleModel');
-    const typeDescription = document.querySelector('.type-description');
-    const companyOrigin = document.querySelector('.company-origin');
-    const modelDetails = document.querySelector('.model-details');
-    const modelYear = document.querySelector('.model-year');
-    const modelPrice = document.querySelector('.model-price');
-
-    // Function to format currency
-    function formatCurrency(amount) {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD'
-        }).format(amount);
-    }
-
-    // Update companies when vehicle type changes
-    vehicleTypeSelect.addEventListener('change', function() {
-        const typeId = this.value;
-        const selectedOption = this.options[this.selectedIndex];
-        
-        // Show type description
-        typeDescription.textContent = selectedOption.dataset.description || '';
-        
-        // Reset dependent dropdowns
-        companySelect.innerHTML = '<option value="">Select a company</option>';
-        modelSelect.innerHTML = '<option value="">Select a model</option>';
-        companySelect.disabled = !typeId;
-        modelSelect.disabled = true;
-        modelDetails.style.display = 'none';
-        
-        if (typeId) {
-            // Fetch companies for selected type
-            fetch(`/vehicles/api/companies/?type_id=${typeId}`)
-                .then(response => response.json())
-                .then(companies => {
-                    companies.forEach(company => {
-                        const option = new Option(company.company_name, company.id);
-                        option.dataset.origin = company.country_of_origin;
-                        companySelect.add(option);
-                    });
-                })
-                .catch(error => {
-                    console.error('Error fetching companies:', error);
-                    alert('Error loading companies. Please try again.');
-                });
-        }
-    });
-
-    // Update models when company changes
-    companySelect.addEventListener('change', function() {
-        const companyId = this.value;
-        const typeId = vehicleTypeSelect.value;
-        const selectedOption = this.options[this.selectedIndex];
-        
-        // Show company origin
-        companyOrigin.textContent = selectedOption.dataset.origin || '';
-        
-        // Reset model dropdown
-        modelSelect.innerHTML = '<option value="">Select a model</option>';
-        modelSelect.disabled = !companyId;
-        modelDetails.style.display = 'none';
-        
-        if (companyId && typeId) {
-            // Fetch models for selected company and type
-            fetch(`/vehicles/api/models/?company_id=${companyId}&type_id=${typeId}`)
-                .then(response => response.json())
-                .then(models => {
-                    models.forEach(model => {
-                        const option = new Option(model.model_name, model.id);
-                        option.dataset.yearFrom = model.year_from;
-                        option.dataset.yearTo = model.year_to;
-                        option.dataset.price = model.base_price;
-                        modelSelect.add(option);
-                    });
-                })
-                .catch(error => {
-                    console.error('Error fetching models:', error);
-                    alert('Error loading models. Please try again.');
-                });
-        }
-    });
-
-    // Show model details when model changes
-    modelSelect.addEventListener('change', function() {
-        const selectedOption = this.options[this.selectedIndex];
-        
-        if (this.value) {
-            const yearFrom = selectedOption.dataset.yearFrom;
-            const yearTo = selectedOption.dataset.yearTo;
-            const price = selectedOption.dataset.price;
-            
-            modelYear.textContent = yearTo ? `${yearFrom} - ${yearTo}` : yearFrom;
-            modelPrice.textContent = formatCurrency(price);
-            modelDetails.style.display = 'block';
-        } else {
-            modelDetails.style.display = 'none';
-        }
-    });
-});
-</script>
 {% endblock %}
 
 {% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <style>
-.form-label {
-    font-weight: 500;
-    margin-bottom: 0.5rem;
-}
-.text-danger {
-    color: #dc3545;
-}
-.form-text {
-    color: #6c757d;
-    font-size: 0.875rem;
-    margin-top: 0.25rem;
-}
-.form-control, .form-select {
-    border-radius: 0.375rem;
-}
-.form-control:focus, .form-select:focus {
-    border-color: #86b7fe;
-    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-}
-.btn {
-    border-radius: 0.375rem;
+    /* Custom CSS for Select2 to match form-control style */
+    .select2-container .select2-selection--single {
+        height: calc(2.75rem + 2px); /* Adjust height to match form-control padding and border */
+        border: 1px solid #d1d5db; /* Match border color */
+        border-radius: 0.75rem; /* Match border radius */
+        padding: 0.75rem 1rem; /* Match padding */
+        background-color: #f9fafb; /* Match background */
+        color: #374151; /* Match text color */
+        font-size: 1rem; /* Match font size */
+        line-height: 1.5; /* Match line height */
+        /* Ensure no default appearance */
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+    }
+
+    .select2-container .select2-selection--single .select2-selection__rendered {
+        padding-left: 0;
+        padding-right: 2.5rem; /* Make space for custom arrow */
+        color: #374151; /* Ensure text color is correct */
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: calc(2.75rem + 2px);
+        width: 2.5rem;
+        top: 0;
+        right: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none; /* Prevent arrow from capturing clicks */
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow b {
+        border-color: #6b7280 transparent transparent transparent; /* Match default arrow color */
+        border-style: solid;
+        border-width: 5px 4px 0 4px;
+    }
+    /* Focus state */
+    .select2-container--default.select2-container--focus .select2-selection--single {
+        border-color: #22c55e; /* Match primary focus ring color */
+        box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.5); /* Add a subtle focus ring */
+    }
+     /* Placeholder style */
+    .select2-container .select2-selection--single .select2-selection__placeholder {
+        color: #9ca3af; /* Match placeholder text color */
+    }
+
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    console.log('jQuery script loaded.');
+    console.log('jQuery loaded:', typeof $);
+</script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+// Drag-and-drop image upload logic
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('vehiclePhotoInput');
+const browseBtn = document.getElementById('browseBtn');
+const imagePreview = document.getElementById('imagePreview');
+
+browseBtn.addEventListener('click', () => fileInput.click());
+dropzone.addEventListener('click', (e) => {
+  if (e.target === dropzone) fileInput.click();
+});
+dropzone.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  dropzone.classList.add('bg-green-100');
+});
+dropzone.addEventListener('dragleave', (e) => {
+  e.preventDefault();
+  dropzone.classList.remove('bg-green-100');
+});
+dropzone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropzone.classList.remove('bg-green-100');
+  fileInput.files = e.dataTransfer.files;
+  showImagePreview(fileInput.files[0]);
+});
+fileInput.addEventListener('change', () => {
+  if (fileInput.files.length > 0) showImagePreview(fileInput.files[0]);
+});
+function showImagePreview(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    imagePreview.innerHTML = `<img src="${e.target.result}" class='h-32 rounded-xl object-contain border border-gray-200 shadow' alt='Preview'>`;
+  };
+  reader.readAsDataURL(file);
 }
 
-/* Disabled select styling */
-.form-select:disabled {
-    background-color: #e9ecef;
-    cursor: not-allowed;
-}
-</style>
+// Improved Select2 and AJAX logic for dynamic dropdowns
+console.log('Custom script starting.');
+$(document).ready(function() {
+    console.log('Document ready. Initializing Select2...');
+    // Initialize Select2
+    ['#id_vehicle_type', '#vehicleCompany', '#vehicleModel', '#year', '#seatingCapacity', '#color'].forEach(function(id) {
+        console.log('Initializing Select2 for ID:', id);
+        if ($(id).length) {
+            $(id).select2({
+                width: '100%',
+                placeholder: $(`${id} option:first`).text() || 'Select',
+                allowClear: true,
+                dropdownAutoWidth: true
+            });
+            console.log('Select2 initialized for', id);
+        } else {
+             console.log('Element not found for Select2 init:', id);
+        }
+    });
+
+    // Attach Select2 event handler AFTER initialization
+    // Using Select2 event for robustness with Select2 changes
+    $('#id_vehicle_type').on('select2:select', function(e) {
+         console.log('Select2 select event fired on #id_vehicle_type.', e);
+        $('#debugOutput').html('Vehicle Type selected (Select2)! Value: ' + $(this).val());
+         // Trigger change event to potentially fire the native change handler if needed elsewhere
+         $(this).trigger('change');
+    });
+     // Also attach a native change event handler as a fallback and for clarity
+     $('#id_vehicle_type').on('change', function() {
+         console.log('Native change event fired on #id_vehicle_type.');
+     });
+
+    // Cache selectors
+    const $companySelect = $('#vehicleCompany');
+    const $modelSelect = $('#vehicleModel');
+
+    function showDebug(msg, data) {
+        const debugDiv = $('#debugOutput');
+        debugDiv.show();
+        debugDiv.html('<b>DEBUG:</b> ' + msg + '<br><pre>' + JSON.stringify(data, null, 2) + '</pre>');
+        console.log('showDebug:', msg, data);
+    }
+
+    // Show debug area loaded message
+    $('#debugOutput').html('Debug area loaded. Waiting for AJAX events...');
+    console.log('Debug area initialized.');
+
+    // Vehicle Type change - Primary logic
+    $('#id_vehicle_type').on('change', function() {
+        console.log('#id_vehicle_type change handler triggered.');
+        const vehicleTypeId = $(this).val();
+        showDebug('Vehicle Type changed', {vehicleTypeId});
+        if (!vehicleTypeId) {
+            console.log('Vehicle Type ID is empty.');
+            $companySelect.html('<option value="">Select company</option>').prop('disabled', true);
+            $modelSelect.html('<option value="">Select model</option>').prop('disabled', true);
+             // Destroy and re-initialize Select2 on these fields to update state and appearance
+            $companySelect.select2('destroy').select2({
+                 width: '100%',
+                 placeholder: 'Select company',
+                 allowClear: true,
+                 dropdownAutoWidth: true
+            });
+            $modelSelect.select2('destroy').select2({
+                 width: '100%',
+                 placeholder: 'Select model',
+                 allowClear: true,
+                 dropdownAutoWidth: true
+            });
+            showDebug('Vehicle Type cleared, dropdowns reset.', {});
+            return;
+        }
+        console.log('Fetching companies for type ID:', vehicleTypeId);
+        fetch(`/vehicles/api/companies/?type_id=${vehicleTypeId}`)
+            .then(response => {
+                 console.log('Companies fetch response received.', response);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Companies API data received:', data);
+                showDebug('Companies API data', data);
+                let options = '<option value="">Select company</option>';
+                data.forEach(company => {
+                    options += `<option value="${company.id}">${company.company_name}</option>`;
+                });
+                $companySelect.html(options).prop('disabled', false);
+                 // Destroy and re-initialize Select2 on the company field
+                $companySelect.select2('destroy').select2({
+                    width: '100%',
+                    placeholder: 'Select company',
+                    allowClear: true,
+                    dropdownAutoWidth: true
+                });
+                // Clear and disable model select when company changes (or vehicle type changes)
+                $modelSelect.html('<option value="">Select model</option>').prop('disabled', true);
+                 // Destroy and re-initialize Select2 on the model field
+                $modelSelect.select2('destroy').select2({
+                    width: '100%',
+                    placeholder: 'Select model',
+                    allowClear: true,
+                    dropdownAutoWidth: true
+                });
+
+            })
+            .catch(error => {
+                console.error('Error loading companies:', error);
+                showDebug('Error loading companies', error);
+            });
+    });
+
+    // Company change - Primary logic
+    $companySelect.on('change', function() {
+        console.log('#vehicleCompany change handler triggered.');
+        const companyId = $(this).val();
+        const vehicleTypeId = $('#id_vehicle_type').val(); // Ensure we still have the type ID
+        showDebug('Company changed', {companyId, vehicleTypeId});
+        if (!companyId || !vehicleTypeId) {
+             console.log('Company ID or Vehicle Type ID is empty.');
+            $modelSelect.html('<option value="">Select model</option>').prop('disabled', true);
+             // Destroy and re-initialize Select2 on the model field
+             $modelSelect.select2('destroy').select2({
+                 width: '100%',
+                 placeholder: 'Select model',
+                 allowClear: true,
+                 dropdownAutoWidth: true
+            });
+            showDebug('Company or Vehicle Type missing, model dropdown reset.', {});
+            return;
+        }
+         console.log('Fetching models for company ID:', companyId, 'and type ID:', vehicleTypeId);
+        fetch(`/vehicles/api/models/?company_id=${companyId}&type_id=${vehicleTypeId}`)
+            .then(response => {
+                 console.log('Models fetch response received.', response);
+                 if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                 }
+                 return response.json();
+            })
+            .then(data => {
+                console.log('Models API data received:', data);
+                showDebug('Models API data', data);
+                let options = '<option value="">Select model</option>';
+                data.forEach(model => {
+                    options += `<option value="${model.id}">${model.model_name}</option>`;
+                });
+                $modelSelect.html(options).prop('disabled', false);
+                 // Destroy and re-initialize Select2 on the model field
+                 $modelSelect.select2('destroy').select2({
+                    width: '100%',
+                    placeholder: 'Select model',
+                    allowClear: true,
+                    dropdownAutoWidth: true
+                 });
+            })
+            .catch(error => {
+                console.error('Error loading models:', error);
+                showDebug('Error loading models', error);
+            });
+    });
+
+    // Trigger the change event on vehicle type initially if a value is pre-selected (e.g., in edit mode)
+    // Use setTimeout to ensure Select2 is fully initialized first
+    setTimeout(() => {
+        const initialVehicleTypeId = $('#id_vehicle_type').val();
+        if (initialVehicleTypeId) {
+            console.log('Initial vehicle type value found, triggering change:', initialVehicleTypeId);
+            $('#id_vehicle_type').trigger('change');
+        }
+         const initialCompanyId = $('#vehicleCompany').val();
+         if (initialCompanyId) {
+             console.log('Initial company value found.', initialCompanyId);
+             // No need to trigger change here, the vehicle type change will handle it.
+         }
+          const initialModelId = $('#vehicleModel').val();
+         if (initialModelId) {
+             console.log('Initial model value found.', initialModelId);
+              // No need to trigger change here.
+         }
+    }, 100); // A small delay to ensure Select2 is ready
+
+}); // End document.ready
+
+console.log('Custom script finished.');
+</script>
 {% endblock %} 

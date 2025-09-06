@@ -7,10 +7,10 @@
     /* Banner styles */
     .dashboard-header {
         position: relative;
-        width: 90%;
-        max-width: 1200px;
+        width: 100%;
+        max-width: 100vw;
         height: 120px;
-        margin: 0.25rem auto 1rem auto;
+        margin: 0 auto 1rem auto;
         border-radius: 8px;
         overflow: hidden;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -23,7 +23,8 @@
         width: 100%;
         height: 100%;
         object-fit: cover;
-        object-position: center 30%;
+        object-position: center 35%;
+        z-index: 0;
     }
 
     .header-overlay {
@@ -33,6 +34,7 @@
         right: 0;
         bottom: 0;
         background: linear-gradient(to right, rgba(47, 128, 237, 0.75), rgba(86, 204, 242, 0.75));
+        z-index: 1;
     }
 
     .dashboard-header-content {
@@ -42,13 +44,13 @@
         transform: translate(-50%, -50%);
         text-align: center;
         color: white;
-        z-index: 1;
+        z-index: 2;
         width: 90%;
         padding: 0 20px;
     }
 
     .dashboard-header h2 {
-        font-size: 1.5rem;
+        font-size: 1.25rem;
         margin: 0;
         text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
     }
@@ -62,16 +64,15 @@
 
     @media screen and (max-width: 768px) {
         .dashboard-header {
-            height: 100px;
-            width: 95%;
+            height: 80px;
         }
 
         .dashboard-header h2 {
-            font-size: 1.15rem;
+            font-size: 1rem;
         }
 
         .dashboard-header p {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
         }
     }
 
@@ -123,15 +124,26 @@
 {% block content %}
 <!-- Fixed-Height Banner/Header -->
 <div class="dashboard-header">
-    <img src="{% static 'images/inner carpool.jpeg' %}" alt="Carpool Dashboard" class="header-image">
+    <img src="{% static 'images/dashboard photos/inner carpool.jpeg' %}" alt="Carpool Dashboard" class="header-image">
     <div class="header-overlay"></div>
     <div class="dashboard-header-content">
         <h2>Welcome to EcoCarpool Dashboard</h2>
-        <p>Your sustainable ride-sharing management platform.</p>
+        <p>
+            {% if request.user.role == 'admin' %}
+                Monitor and manage the platform's performance and user activity.
+            {% elif request.user.role == 'driver' %}
+                Manage your rides and track your earnings as a driver.
+            {% else %}
+                Find and book rides to your destination.
+            {% endif %}
+        </p>
     </div>
 </div>
 
 <div class="container-fluid px-4 py-3">
+    <!-- Sidebar -->
+    {% include 'dashboard/sidebar.html' %}
+
     {% if request.user.role == 'admin' %}
     <!-- Admin Stats -->
     <div class="row g-3 mb-3">

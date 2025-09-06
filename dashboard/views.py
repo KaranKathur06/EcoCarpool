@@ -17,6 +17,7 @@ from django.http import JsonResponse
 from reviews.models import Review
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.views.generic import ListView
+from django.db.models.functions import ExtractWeek, ExtractMonth, ExtractYear
 
 User = get_user_model()
 
@@ -93,37 +94,105 @@ def dashboard(request):
         })
 
     elif user.role == 'driver':
-        # Existing driver dashboard logic
-        total_earnings = user.get_total_earnings()
+        # Stats cards
         total_rides = user.get_total_rides()
-        total_passengers = user.bookings.count()
-        rating = user.get_rating()
+        total_earnings = user.get_total_earnings()
+        rating = round(user.get_rating() or 0, 2)
+        total_ratings = user.reviews_received.count()
+        # CO2 saved: assume 2.3kg per completed ride
+        co2_saved = user.driver_rides.filter(status='completed').count() * 2.3
+
+        # Earnings chart (weekly/monthly/yearly)
+        now = timezone.now()
+        chart_periods = {
+            'week': 7,
+            'month': 30,
+            'year': 365
+        }
+        earnings_chart = {}
+        for period, days in chart_periods.items():
+            start_date = now - timedelta(days=days)
+            earnings = (
+                Payment.objects.filter(receiver=user, status='completed', created_at__gte=start_date)
+                .annotate(day=TruncDate('created_at'))
+                .values('day')
+                .annotate(total=Sum('amount'))
+                .order_by('day')
+            )
+            labels = []
+            data = []
+            for i in range(days):
+                day = (start_date + timedelta(days=i)).date()
+                labels.append(day.strftime('%b %d'))
+                found = next((e['total'] for e in earnings if e['day'] == day), 0)
+                data.append(float(found) if found else 0)
+            earnings_chart[period] = {'labels': labels, 'data': data}
+
+        # Upcoming rides (next 5)
+        upcoming_rides = Ride.objects.filter(driver=user, ride_date__gte=now, status__in=['active', 'pending']).order_by('ride_date')[:5]
+
+        # Vehicle status (first vehicle)
+        vehicle = Vehicle.objects.filter(owner=user).first()
+        vehicle_status = None
+        if vehicle:
+            vehicle_status = {
+                'brand': str(vehicle.company),
+                'model': str(vehicle.model),
+                'license_plate': vehicle.license_plate,
+                'fuel_type': vehicle.get_fuel_type_display(),
+                'seating_capacity': vehicle.seating_capacity,
+                'year': vehicle.year,
+                'color': vehicle.color,
+                'is_active': vehicle.is_active,
+                'photo': vehicle.vehicle_photo.url if vehicle.vehicle_photo else None,
+                'mileage': vehicle.mileage,
+            }
+
+        # Ride distribution (pie chart: by type or time of day, here by status)
+        ride_status_counts = user.driver_rides.values('status').annotate(count=Count('id'))
+        ride_distribution = {item['status']: item['count'] for item in ride_status_counts}
+
+        # Recent reviews (last 3)
+        recent_reviews = Review.objects.filter(reviewed=user).order_by('-created_at')[:3]
         
-        # Get user's vehicle
-        user_vehicle = Vehicle.objects.filter(owner=user).first()
-        
-        # Get recent rides
-        recent_rides = Ride.objects.filter(driver=user).order_by('-ride_date')[:5]
-        
-        # Get upcoming rides
-        upcoming_rides = Ride.objects.filter(driver=user, status='upcoming').order_by('ride_date')
+        # Popular routes (top 3 by count, with coordinates if available)
+        popular_routes = (
+            user.driver_rides.values('start_location', 'end_location')
+            .annotate(count=Count('id'))
+            .order_by('-count')[:3]
+        )
+        # For map: get coordinates if possible (not implemented here, placeholder)
+        for route in popular_routes:
+            route['start_lat'] = None
+            route['start_lng'] = None
+            route['end_lat'] = None
+            route['end_lng'] = None
+
+        # Recent activity (last 5 completed/cancelled rides)
+        recent_activity = (
+            Ride.objects.filter(driver=user, status__in=['completed', 'cancelled'])
+            .order_by('-ride_date')[:5]
+        )
         
         context.update({
-            'total_earnings': total_earnings,
             'total_rides': total_rides,
-            'total_passengers': total_passengers,
-            'rating': round(rating, 1) if rating else 0,
-            'total_ratings': user.reviews_received.count(),
-            'today_earnings': user.get_today_earnings(),
-            'week_rides': user.get_week_rides(),
-            'today_passengers': user.get_today_passengers(),
-            'user_vehicle': user_vehicle,
-            'recent_rides': recent_rides,
-            'upcoming_rides': upcoming_rides
+            'total_earnings': total_earnings,
+            'rating': rating,
+            'total_ratings': total_ratings,
+            'co2_saved': co2_saved,
+            'earnings_chart': earnings_chart,
+            'earnings_chart_json': json.dumps(earnings_chart['month']),
+            'upcoming_rides': upcoming_rides,
+            'vehicle_status': vehicle_status,
+            'ride_distribution': ride_distribution,
+            'ride_distribution_json': json.dumps(ride_distribution),
+            'recent_reviews': recent_reviews,
+            'popular_routes': popular_routes,
+            'recent_activity': recent_activity,
         })
 
     else:
-        # Existing passenger dashboard logic
+        # Passenger statistics
         total_trips = user.bookings.count()
         week_trips = user.bookings.filter(
             created_at__gte=timezone.now() - timedelta(days=7)
@@ -144,12 +213,90 @@ def dashboard(request):
             'recent_bookings': recent_bookings
         })
 
-    return render(request, 'dashboard/index.html', context)
+    return render(request, 'dashboard/dashboard.html', context)
+
+@login_required
+def dashboard_stats(request):
+    stat_type = request.GET.get('type')
+    user = request.user
+    today = timezone.now().date()
+    week_ago = today - timedelta(days=7)
+    month_ago = today - timedelta(days=30)
+
+    if stat_type == 'users':
+        current = CustomUser.objects.count()
+        previous = CustomUser.objects.filter(date_joined__lt=month_ago).count()
+        change = ((current - previous) / previous * 100) if previous > 0 else 0
+        return JsonResponse({
+            'value': current,
+            'change': change,
+            'change_text': f'{abs(round(change, 1))}% from last month'
+        })
+
+    elif stat_type == 'rides':
+        current = Ride.objects.count()
+        previous = Ride.objects.filter(created_at__lt=week_ago).count()
+        change = ((current - previous) / previous * 100) if previous > 0 else 0
+        return JsonResponse({
+            'value': current,
+            'change': change,
+            'change_text': f'{abs(round(change, 1))}% from last week'
+        })
+
+    elif stat_type == 'earnings':
+        current = sum(booking.get_total_price() for booking in Booking.objects.filter(status='completed'))
+        previous = sum(booking.get_total_price() for booking in Booking.objects.filter(status='completed', updated_at__lt=month_ago))
+        change = ((current - previous) / previous * 100) if previous > 0 else 0
+        return JsonResponse({
+            'value': f'${current:.2f}',
+            'change': change,
+            'change_text': f'{abs(round(change, 1))}% from last month'
+        })
+
+    elif stat_type == 'transactions':
+        current = Transaction.objects.count()
+        previous = Transaction.objects.filter(created_at__lt=month_ago).count()
+        change = ((current - previous) / previous * 100) if previous > 0 else 0
+        return JsonResponse({
+            'value': f'${current:.2f}',
+            'change': change,
+            'change_text': f'{abs(round(change, 1))}% from last month'
+        })
+
+    elif stat_type == 'passengers':
+        current = Booking.objects.filter(status='completed').count()
+        today_count = Booking.objects.filter(status='completed', created_at__date=today).count()
+        return JsonResponse({
+            'value': current,
+            'change': 0,
+            'change_text': f'Today: {today_count}'
+        })
+
+    elif stat_type == 'your-rides':
+        current = Ride.objects.filter(driver=user).count()
+        upcoming = Ride.objects.filter(driver=user, status='upcoming').count()
+        return JsonResponse({
+            'value': current,
+            'change': 0,
+            'change_text': f'Upcoming: {upcoming}'
+        })
+
+    elif stat_type == 'your-earnings':
+        current = user.get_total_earnings()
+        today_earnings = user.get_today_earnings()
+        return JsonResponse({
+            'value': f'${current:.2f}',
+            'change': 0,
+            'change_text': f'Today: ${today_earnings:.2f}'
+        })
+
+    return JsonResponse({'error': 'Invalid stat type'}, status=400)
 
 @login_required
 def chart_data(request):
     chart_type = request.GET.get('chart')
     period = request.GET.get('period', 'week')
+    user = request.user
     
     now = timezone.now()
     
@@ -175,10 +322,10 @@ def chart_data(request):
         data['labels'].append(current.strftime(date_format))
         current += timedelta(days=1)
     
-    if request.user.role == 'driver':
+    if user.role == 'driver':
         if chart_type == 'earningsChart':
             earnings_data = (Payment.objects
-                .filter(receiver=request.user, status='completed', created_at__gte=start_date)
+                .filter(receiver=user, status='completed', created_at__gte=start_date)
                 .annotate(date=TruncDate('created_at'))
                 .values('date')
                 .annotate(total=Sum('amount'))
@@ -197,9 +344,9 @@ def chart_data(request):
                 'fill': True
             })
         
-        elif chart_type == 'rideActivityChart':
+        elif chart_type == 'ridesChart':
             ride_data = (Ride.objects
-                .filter(driver=request.user, ride_date__gte=start_date)
+                .filter(driver=user, ride_date__gte=start_date)
                 .annotate(date=TruncDate('ride_date'))
                 .values('date', 'status')
                 .annotate(count=Count('id'))
@@ -232,7 +379,7 @@ def chart_data(request):
     else:  # Passenger
         if chart_type == 'tripHistoryChart':
             trip_data = (Booking.objects
-                .filter(passenger=request.user, created_at__gte=start_date)
+                .filter(passenger=user, created_at__gte=start_date)
                 .annotate(date=TruncDate('created_at'))
                 .values('date')
                 .annotate(count=Count('id'))
@@ -250,105 +397,8 @@ def chart_data(request):
                 'backgroundColor': 'rgba(65, 105, 225, 0.1)',
                 'fill': True
             })
-        
-        elif chart_type == 'savingsChart':
-            savings_data = (Booking.objects
-                .filter(passenger=request.user, created_at__gte=start_date)
-                .annotate(date=TruncDate('created_at'))
-                .values('date')
-                .annotate(
-                    savings=Sum(
-                        ExpressionWrapper(
-                            F('price') * 0.3,  # 30% savings
-                            output_field=FloatField()
-                        )
-                    )
-                )
-                .order_by('date'))
-            
-            savings_values = []
-            for date in dates:
-                daily_savings = next((item['savings'] for item in savings_data if item['date'] == date), 0)
-                savings_values.append(daily_savings)
-            
-            data['datasets'].append({
-                'label': 'Money Saved',
-                'data': savings_values,
-                'borderColor': '#10b981',
-                'backgroundColor': 'rgba(16, 185, 129, 0.1)',
-                'fill': True
-            })
     
     return JsonResponse(data)
-
-@login_required
-def dashboard_stats(request):
-    try:
-        now = timezone.now()
-        last_month = now - timedelta(days=30)
-        last_week = now - timedelta(days=7)
-
-        # Get monthly stats
-        monthly_stats = Ride.objects.filter(
-            created_at__gte=last_month
-        ).annotate(
-            month=TruncMonth('created_at')
-        ).values('month').annotate(
-            total_rides=Count('id'),
-            total_earnings=Sum('price_per_seat')
-        ).order_by('month')
-
-        # Get daily stats for the last week
-        daily_stats = Ride.objects.filter(
-            created_at__gte=last_week
-        ).annotate(
-            day=TruncDay('created_at')
-        ).values('day').annotate(
-            total_rides=Count('id'),
-            total_earnings=Sum('price_per_seat')
-        ).order_by('day')
-
-        # Get user registration stats
-        user_stats = User.objects.filter(
-            date_joined__gte=last_month
-        ).annotate(
-            month=TruncMonth('date_joined')
-        ).values('month').annotate(
-            new_users=Count('id')
-        ).order_by('month')
-
-        # Get booking stats
-        booking_stats = Booking.objects.filter(
-            created_at__gte=last_month
-        ).annotate(
-            month=TruncMonth('created_at')
-        ).values('month').annotate(
-            total_bookings=Count('id'),
-            total_revenue=Sum('price')
-        ).order_by('month')
-
-        context = {
-            'monthly_stats': list(monthly_stats),
-            'daily_stats': list(daily_stats),
-            'user_stats': list(user_stats),
-            'booking_stats': list(booking_stats),
-        }
-
-        return render(request, 'dashboard/stats.html', context)
-
-    except Exception as e:
-        print(f"Stats Error: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        
-        context = {
-            'monthly_stats': [],
-            'daily_stats': [],
-            'user_stats': [],
-            'booking_stats': [],
-            'error': str(e)
-        }
-        return render(request, 'dashboard/stats.html', context)
 
 @login_required
 def payment_history(request):

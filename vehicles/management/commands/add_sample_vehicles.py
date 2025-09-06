@@ -50,10 +50,10 @@ class Command(BaseCommand):
         company_objects = {}
         for name, country in companies.items():
             company, created = VehicleCompany.objects.get_or_create(
-                name=name,
+                company_name=name,
                 defaults={
-                    'country': country,
-                    'website': f'https://www.{name.lower().replace("-", "").replace(" ", "")}.com'
+                    'country_of_origin': country,
+                    'is_luxury': False
                 }
             )
             company_objects[name] = company
@@ -137,10 +137,10 @@ class Command(BaseCommand):
         # Then create or update the new models
         for model_name, company_name, type_name, year_from in models_data:
             model, created = VehicleModel.objects.update_or_create(
-                name=model_name,
+                model_name=model_name,
                 company=company_objects[company_name],
                 defaults={
-                    'vehicle_type': type_objects[type_name],
+                    'type': type_objects[type_name],
                     'year_from': year_from,
                     'is_active': True
                 }
